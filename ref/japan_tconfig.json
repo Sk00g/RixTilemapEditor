@@ -1,0 +1,101 @@
+{
+    "name": "Japan",
+    "maxPlayers": 4,
+    "tilesetPath": "graphics/tilesets/grassBiome/overworld_tileset_grass.png",
+    "tileMapSize": [25, 19],
+    "tileSize": [16, 16],
+    "connectedEmpireReinforceIncrement": 3,
+    "defaultReinforce": "3",
+    "continents": [
+        {
+            "name": "South Japan",
+            "regions": ["SJ-1", "SJ-2"],
+            "color": "#ff4030",
+            "ownershipValue": 2
+        },
+        {
+            "name": "Southeast Japan",
+            "regions": ["SEJ-1", "SEJ-2"],
+            "color": "#30ff40",
+            "ownershipValue": 2
+        }
+    ],
+    "regions": [
+        {
+            "name": "SJ-1",
+            "borderTiles": [
+                [2, 2],
+                [3, 2],
+                [4, 2],
+                [5, 2],
+                [5, 3],
+                [5, 4],
+                [5, 5],
+                [4, 5],
+                [3, 5],
+                [2, 5],
+                [2, 4],
+                [2, 3]
+            ],
+            "unitPoint": [124, 124],
+            "borderRegions": ["SEJ-1", "SJ-2"]
+        },
+        {
+            "name": "SEJ-2",
+            "borderTiles": [
+                [6, 6],
+                [7, 6],
+                [8, 6],
+                [9, 6],
+                [9, 7],
+                [9, 8],
+                [9, 9],
+                [8, 9],
+                [7, 9],
+                [6, 9],
+                [6, 8],
+                [6, 7]
+            ],
+            "unitPoint": [250, 250],
+            "borderRegions": ["SEJ-1", "SJ-2"]
+        },
+        {
+            "name": "SJ-2",
+            "borderTiles": [
+                [2, 6],
+                [3, 6],
+                [4, 6],
+                [5, 6],
+                [5, 7],
+                [5, 8],
+                [5, 9],
+                [4, 9],
+                [3, 9],
+                [2, 9],
+                [2, 8],
+                [2, 7]
+            ],
+            "unitPoint": [124, 250],
+            "borderRegions": ["SEJ-2", "SJ-1"]
+        },
+        {
+            "name": "SEJ-1",
+            "borderTiles": [
+                [6, 2],
+                [7, 2],
+                [8, 2],
+                [9, 2],
+                [9, 3],
+                [9, 4],
+                [9, 5],
+                [8, 5],
+                [7, 5],
+                [6, 5],
+                [6, 4],
+                [6, 3]
+            ],
+            "unitPoint": [250, 124],
+            "borderRegions": ["SEJ-2", "SJ-1"]
+        }
+    ]
+}
