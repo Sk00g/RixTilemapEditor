@@ -60,16 +60,26 @@ function handleNumberPress(num) {
     let count = 0;
     let x = 1100;
     let y = 40;
+    let column = 0;
     for (let index of theme[num].tiles) {
         let sprite = new PIXI.Sprite(assetLoader.loadTexture(assetMap.environment.tileset_grass));
         sprite.texture.frame = new PIXI.Rectangle(index[0] * 16, index[1] * 16, 16, 16);
         sprite.scale.set(2, 2);
-        sprite.position.set(x, y);
+        sprite.position.set(x + column * 78, y);
         y += 36;
         refIconContainer.addChild(sprite);
 
-        let label = new SUIE.Label(String.fromCharCode(65 + count++), [x + 40, y - 26], 10);
+        let label = new SUIE.Label(
+            String.fromCharCode(65 + count++),
+            [x + 40 + column * 78, y - 26],
+            10
+        );
         refLabelContainer.addChild(label);
+
+        if (count > 12 * (column + 1)) {
+            y = 40;
+            column++;
+        }
     }
 }
 
