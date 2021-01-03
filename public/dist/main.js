@@ -43403,6 +43403,7 @@ class TileMap {
             this._tileSprites[x] = [];
             for (let y = 0; y < mapSize[1]; y++) {
                 let texture = new pixi_es.Texture(pixi_es.BaseTexture.from(tilesetPath));
+                texture.baseTexture.scaleMode = pixi_es.SCALE_MODES.NEAREST;
                 let sprite = new pixi_es.Sprite(texture);
 
                 sprite.position.set(

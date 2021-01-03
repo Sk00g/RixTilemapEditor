@@ -18,6 +18,7 @@ class TileMap {
             this._tileSprites[x] = [];
             for (let y = 0; y < mapSize[1]; y++) {
                 let texture = new PIXI.Texture(PIXI.BaseTexture.from(tilesetPath));
+                texture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
                 let sprite = new PIXI.Sprite(texture);
 
                 sprite.position.set(
