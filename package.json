@@ -18,6 +18,7 @@
     "dependencies": {
         "cors": "^2.8.5",
         "express": "^4.17.1",
+        "js-file-download": "^0.4.12",
         "pixi.js": "^5.3.7",
         "pixi.js-keyboard": "^1.0.9",
         "pixi.js-mouse": "^1.0.4"

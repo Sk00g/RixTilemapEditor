@@ -1475,6 +1475,48 @@ if (true) {
 
 /***/ }),
 
+/***/ 823:
+/***/ ((module) => {
+
+module.exports = function(data, filename, mime, bom) {
+    var blobData = (typeof bom !== 'undefined') ? [bom, data] : [data]
+    var blob = new Blob(blobData, {type: mime || 'application/octet-stream'});
+    if (typeof window.navigator.msSaveBlob !== 'undefined') {
+        // IE workaround for "HTML7007: One or more blob URLs were
+        // revoked by closing the blob for which they were created.
+        // These URLs will no longer resolve as the data backing
+        // the URL has been freed."
+        window.navigator.msSaveBlob(blob, filename);
+    }
+    else {
+        var blobURL = (window.URL && window.URL.createObjectURL) ? window.URL.createObjectURL(blob) : window.webkitURL.createObjectURL(blob);
+        var tempLink = document.createElement('a');
+        tempLink.style.display = 'none';
+        tempLink.href = blobURL;
+        tempLink.setAttribute('download', filename);
+
+        // Safari thinks _blank anchor are pop ups. We only want to set _blank
+        // target if the browser does not support the HTML5 download attribute.
+        // This allows you to download files in desktop safari if pop up blocking
+        // is enabled.
+        if (typeof tempLink.download === 'undefined') {
+            tempLink.setAttribute('target', '_blank');
+        }
+
+        document.body.appendChild(tempLink);
+        tempLink.click();
+
+        // Fixes "webkit blob resource error 1"
+        setTimeout(function() {
+            document.body.removeChild(tempLink);
+            window.URL.revokeObjectURL(blobURL);
+        }, 200)
+    }
+}
+
+
+/***/ }),
+
 /***/ 940:
 /***/ ((module, exports) => {
 
@@ -42918,6 +42960,319 @@ module.exports = {
 
 // EXTERNAL MODULE: ./node_modules/pixi.js/lib/pixi.es.js + 36 modules
 var pixi_es = __webpack_require__(832);
+;// CONCATENATED MODULE: ./public/src/suie/core.js
+const SOURCE_PATH = "graphics/ui/source/source.png";
+const RESOLUTION_SCALE = 1.5;
+
+const PanelColor = Object.freeze({
+    BLUE: "blue",
+    ORANGE: "orange",
+});
+
+const PanelSize = Object.freeze({
+    LARGE: "large",
+    SMALL: "small",
+});
+
+/* harmony default export */ const core = ({
+    PanelColor: PanelColor,
+    PanelSize: PanelSize,
+    SOURCE_PATH: SOURCE_PATH,
+    RESOLUTION_SCALE: RESOLUTION_SCALE,
+});
+
+;// CONCATENATED MODULE: ./public/src/suie/panel.js
+
+
+
+const BORDER_FRAMES = {
+    [core.PanelSize.LARGE]: {
+        [core.PanelColor.BLUE]: {
+            tl: [384, 96, 16, 16],
+            t: [407, 96, 16, 16],
+            tr: [432, 96, 16, 16],
+            r: [432, 121, 16, 16],
+            br: [432, 160, 16, 16],
+            b: [407, 160, 16, 16],
+            bl: [384, 160, 16, 16],
+            l: [384, 121, 16, 16],
+        },
+        [core.PanelColor.ORANGE]: {
+            tl: [320, 96, 16, 16],
+            t: [339, 96, 16, 16],
+            tr: [368, 96, 16, 16],
+            r: [368, 136, 16, 16],
+            br: [368, 160, 16, 16],
+            b: [353, 160, 16, 16],
+            bl: [320, 160, 16, 16],
+            l: [320, 127, 16, 16],
+        },
+    },
+    [core.PanelSize.SMALL]: {
+        [core.PanelColor.BLUE]: {
+            l: [368, 32, 8, 16],
+            m: [381, 32, 8, 16],
+            r: [392, 32, 8, 16],
+        },
+        [core.PanelColor.ORANGE]: {
+            l: [240, 32, 8, 16],
+            m: [252, 32, 8, 16],
+            r: [264, 32, 8, 16],
+        },
+    },
+};
+const BACKGROUND_COLOR = {
+    [core.PanelColor.BLUE]: 0x417291,
+    [core.PanelColor.ORANGE]: 0xd36b41,
+};
+const RAW_BORDER_WIDTH = {
+    [core.PanelSize.LARGE]: 16,
+    [core.PanelSize.SMALL]: 8,
+};
+const RAW_BORDER_HEIGHT = {
+    [core.PanelSize.LARGE]: 16,
+    [core.PanelSize.SMALL]: 8,
+};
+
+class Panel extends pixi_es.Container {
+    constructor(rect, panelSize = core.PanelSize.LARGE, panelColor = core.PanelColor.BLUE) {
+        super();
+
+        this.position.set(rect.x, rect.y);
+        this._size = [rect.width, rect.height];
+        this._borderScale = 1.0;
+        this._color = panelColor;
+        this._panelSize = panelSize;
+        this._panelChildren = [];
+
+        this._assemble();
+    }
+
+    addMember(child) {
+        this._panelChildren.push(child);
+        this._assemble();
+    }
+
+    _getBorderSprite(border) {
+        let texture = new pixi_es.Texture(
+            pixi_es.BaseTexture.from(core.SOURCE_PATH),
+            new pixi_es.Rectangle(...BORDER_FRAMES[this._panelSize][this._color][border])
+        );
+        let sprite = new pixi_es.Sprite(texture);
+        sprite.scale.set(this._borderScale, this._borderScale);
+        return sprite;
+    }
+
+    _assemble() {
+        let w = this._size[0];
+        let h = this._size[1];
+        let bw = Math.floor(RAW_BORDER_WIDTH[this._panelSize] * this._borderScale);
+        let bh = Math.floor(RAW_BORDER_HEIGHT[this._panelSize] * this._borderScale);
+
+        this.removeChildren();
+
+        let bckgr = new pixi_es.Graphics();
+        bckgr.beginFill(BACKGROUND_COLOR[this._color]);
+        bckgr.drawRect(Math.floor(bw / 2), Math.floor(bh / 2), w - bw, h - bh);
+        bckgr.endFill();
+        this.addChild(bckgr);
+
+        // Corner borders
+        let borders = {};
+        for (let border of ["tl", "tr", "br", "bl"]) {
+            borders[border] = this._getBorderSprite(border);
+        }
+        borders.tr.x = w - bw;
+        borders.br.position.set(w - bw, h - bh);
+        borders.bl.y = h - bh;
+        this.addChild(borders.tl, borders.tr, borders.br, borders.bl);
+
+        // Horizontal edges
+        let curx = bw;
+        while (curx < w - bw * 2) {
+            let top = this._getBorderSprite("t");
+            let bot = this._getBorderSprite("b");
+            top.x = curx;
+            bot.position.set(curx, h - bh);
+
+            this.addChild(top, bot);
+            curx += bw;
+        }
+        let topFill = this._getBorderSprite("t");
+        topFill.x = w - bw * 2;
+        let botFill = this._getBorderSprite("b");
+        botFill.position.set(w - bw * 2, h - bh);
+        this.addChild(topFill, botFill);
+
+        // Vertical edges
+        let cury = bh;
+        while (cury < h - bh * 2) {
+            let left = this._getBorderSprite("l");
+            let right = this._getBorderSprite("r");
+            left.y = cury;
+            right.position.set(w - bw, cury);
+
+            this.addChild(left, right);
+            cury += bh;
+        }
+        let leftFill = this._getBorderSprite("l");
+        leftFill.y = h - bh * 2;
+        let rightFill = this._getBorderSprite("r");
+        rightFill.position.set(w - bw, h - bh * 2);
+        this.addChild(leftFill, rightFill);
+
+        if (this._panelChildren.length > 0) this.addChild(...this._panelChildren);
+
+        console.log("finished render");
+    }
+}
+
+/* harmony default export */ const panel = (Panel);
+
+;// CONCATENATED MODULE: ./public/src/suie/label.js
+
+
+class Label extends pixi_es.Text {
+    constructor(text, position, fontSize = 6, fontColor = "#dddddd") {
+        super(text, { fontFamily: "emulogic", fontSize: fontSize, fill: fontColor });
+
+        this.position.set(...position);
+    }
+}
+
+/* harmony default export */ const label = (Label);
+
+// EXTERNAL MODULE: ./node_modules/pixi.js-mouse/index.js
+var pixi_js_mouse = __webpack_require__(737);
+var pixi_js_mouse_default = /*#__PURE__*/__webpack_require__.n(pixi_js_mouse);
+;// CONCATENATED MODULE: ./public/src/suie/textButton.js
+
+
+
+
+
+const textButton_BORDER_FRAMES = {
+    [core.PanelColor.BLUE]: {
+        l: [368, 32, 8, 16],
+        m: [381, 32, 8, 16],
+        r: [392, 32, 8, 16],
+    },
+    [core.PanelColor.ORANGE]: {
+        l: [240, 32, 8, 16],
+        m: [252, 32, 8, 16],
+        r: [264, 32, 8, 16],
+    },
+};
+const BORDER_WIDTH = 8;
+
+class TextButton extends pixi_es.Container {
+    constructor(text, position, action, color = core.PanelColor.BLUE) {
+        super();
+
+        this._text = text;
+        this._color = color;
+        this._suieChildren = [];
+        this._isPressed = false;
+        this._length = 20 + this._text.length * 6;
+        this._action = action;
+        this.position.set(...position);
+
+        this._highlight = new pixi_es.Graphics();
+        this._highlight.beginFill(0xffffff, 0.15);
+        this._highlight.drawRect(2, 2, this._length - 4, 12);
+        this._highlight.endFill();
+        this._highlight.visible = false;
+        this._suieChildren.push(this._highlight);
+
+        this._label = new label(text, [10, 4]);
+        this._suieChildren.push(this._label);
+
+        pixi_js_mouse_default().events.on("pressed", (code, event) => this._mouseDown(code, event));
+        pixi_js_mouse_default().events.on("released", (code, event) => this._mouseUp(code, event));
+
+        this._assemble();
+    }
+
+    _isPointWithin(x, y) {
+        let thisX = this.getGlobalPosition().x;
+        let thisY = this.getGlobalPosition().y;
+        return x < thisX + this._length && x > thisX && y > thisY && y < thisY + 16;
+    }
+
+    _mouseDown(code, event) {
+        let x = Math.floor(event.offsetX / core.RESOLUTION_SCALE);
+        let y = Math.floor(event.offsetY / core.RESOLUTION_SCALE);
+        if (this._isPointWithin(x, y)) {
+            this._isPressed = true;
+            this._highlight.visible = true;
+            this._label.x += 1;
+            this._label.y += 1;
+        }
+    }
+
+    _mouseUp(code, event) {
+        if (this._isPressed) {
+            let x = Math.floor(event.offsetX / core.RESOLUTION_SCALE);
+            let y = Math.floor(event.offsetY / core.RESOLUTION_SCALE);
+
+            this._isPressed = false;
+            this._highlight.visible = false;
+            this._label.x -= 1;
+            this._label.y -= 1;
+            if (this._isPointWithin(x, y) && this._action) this._action();
+        }
+    }
+
+    _getBorderSprite(border) {
+        let texture = new pixi_es.Texture(
+            pixi_es.BaseTexture.from(core.SOURCE_PATH),
+            new pixi_es.Rectangle(...textButton_BORDER_FRAMES[this._color][border])
+        );
+        let sprite = new pixi_es.Sprite(texture);
+        return sprite;
+    }
+
+    _assemble() {
+        this.removeChildren();
+
+        let w = this._length;
+
+        this.addChild(this._getBorderSprite("l"));
+        let right = this._getBorderSprite("r");
+        right.x = w - BORDER_WIDTH;
+        this.addChild(right);
+
+        let curx = BORDER_WIDTH;
+        while (curx < w - BORDER_WIDTH * 2) {
+            let mid = this._getBorderSprite("m");
+            mid.x = curx;
+            curx += BORDER_WIDTH;
+            this.addChild(mid);
+        }
+        let fill = this._getBorderSprite("m");
+        fill.x = w - BORDER_WIDTH * 2;
+        this.addChild(fill);
+
+        if (this._suieChildren.length > 0) this.addChild(...this._suieChildren);
+    }
+}
+
+/* harmony default export */ const textButton = (TextButton);
+
+;// CONCATENATED MODULE: ./public/src/suie/suie.js
+
+
+
+
+
+/* harmony default export */ const suie = ({
+    Panel: panel,
+    PanelColor: core.PanelColor,
+    PanelSize: core.PanelSize,
+    Label: label,
+    TextButton: textButton,
+});
+
 ;// CONCATENATED MODULE: ./public/src/logService.js
 const LogLevel = Object.freeze({
     DEBUG: "DEBUG",
@@ -43024,15 +43379,18 @@ function logService(level, message, source = "APP", production = false) {
 // EXTERNAL MODULE: ./node_modules/pixi.js-keyboard/index.js
 var pixi_js_keyboard = __webpack_require__(569);
 var pixi_js_keyboard_default = /*#__PURE__*/__webpack_require__.n(pixi_js_keyboard);
-// EXTERNAL MODULE: ./node_modules/pixi.js-mouse/index.js
-var pixi_js_mouse = __webpack_require__(737);
-var pixi_js_mouse_default = /*#__PURE__*/__webpack_require__.n(pixi_js_mouse);
+// EXTERNAL MODULE: ./node_modules/js-file-download/file-download.js
+var file_download = __webpack_require__(823);
+var file_download_default = /*#__PURE__*/__webpack_require__.n(file_download);
 ;// CONCATENATED MODULE: ./public/src/tilemap.js
+
 
 
 // Class used for displaying tilemap
 class TileMap {
-    constructor(stage, tilesetPath, mapSize) {
+    constructor(stage, tilesetPath, mapSize, tileIndices = null) {
+        this._tilesetPath = tilesetPath;
+        this._mapSize = mapSize;
         this._tileSize = [16, 16];
         this._scale = 2.0;
 
@@ -43055,7 +43413,11 @@ class TileMap {
 
                 this._tileSprites[x][y] = sprite;
 
-                this.updateTileIndex(x, y, Math.floor(Math.random() * 3), 0);
+                if (!tileIndices) this.updateTileIndex(x, y, Math.floor(Math.random() * 3), 0);
+                else {
+                    let dataIndex = tileIndices[x][y];
+                    this.updateTileIndex(x, y, dataIndex[0], dataIndex[1]);
+                }
 
                 this._spriteContainer.addChild(sprite);
             }
@@ -43090,15 +43452,58 @@ class TileMap {
         );
     }
 
-    exportToDataFile(fileName) {
-        // collect all internal variables into a single data object
-        // convert said object into text (let text = JSON.stringify(data))
-        // download said text to the browser-user's computer
+    exportData() {
+        let dataObject = {
+            name: "NEW_MAP",
+            maxPlayers: 4,
+            tilesetPath: this._tilesetPath,
+            tileMapSize: this._mapSize,
+            tileSize: this._tileSize,
+            scale: this._scale,
+            connectedEmpireReinforceIncrement: 3,
+            defaultReinforce: "3",
+            continents: [
+                {
+                    name: "NAME",
+                    regions: ["R1", "R2", "etc..."],
+                    color: "#ff4030",
+                    ownershipValue: 4,
+                },
+            ],
+            regions: [
+                {
+                    name: "R1",
+                    borderTiles: [
+                        [0, 0],
+                        [1, 0],
+                        [2, 0],
+                        [3, 0],
+                        [3, 1],
+                        [3, 2],
+                        [3, 3],
+                        [2, 3],
+                        [1, 3],
+                        [0, 3],
+                        [0, 2],
+                        [0, 1],
+                    ],
+                    unitPoint: [80, 80],
+                    borderRegions: ["R2"],
+                },
+            ],
+            tileIndices: this._tileIndices,
+        };
+
+        file_download_default()(JSON.stringify(dataObject), "NEW_MAP.json");
     }
 }
 
 /* harmony default export */ const tilemap = (TileMap);
 
+;// CONCATENATED MODULE: ./public/src/tileMapThemes.json
+const tileMapThemes_namespaceObject = JSON.parse("[{\"theme\":\"Grass\",\"tiles\":[[0,0],[1,0],[2,0],[3,0],[4,0],[5,0],[0,1],[1,1],[2,1],[3,1],[4,1],[0,2],[1,2],[2,2],[3,2],[4,2],[0,3],[1,3],[2,3],[3,3],[4,3]]},{\"theme\":\"Roads\",\"tiles\":[[0,5],[0,6],[0,7],[1,4],[1,5],[1,6],[1,7],[2,4],[2,5],[2,6],[2,7],[3,4],[3,5],[3,6],[3,7],[0,9],[0,10],[0,11],[1,8],[1,9],[1,10],[1,11],[2,8],[2,9],[2,10],[2,11],[3,8],[3,9],[3,10],[3,11]]},{\"theme\":\"Water\",\"tiles\":[[4,0],[5,0],[6,0],[7,0],[8,0],[4,1],[5,1],[6,1],[7,1],[8,1],[4,2],[5,2],[6,2]]},{\"theme\":\"Trees\",\"tiles\":[[4,9],[5,9],[6,9],[7,9],[8,9],[4,10],[5,10],[6,10],[7,10],[8,10],[4,11],[5,11],[6,11],[7,11],[8,11],[9,11]]},{\"theme\":\"Cliffs\",\"tiles\":[[4,6],[5,6],[6,6],[7,6],[8,6],[9,6],[10,6],[11,6],[4,7],[5,7],[6,7],[7,7],[8,7],[9,7],[10,7],[11,7],[4,8],[5,8],[6,8],[11,8]]},{\"theme\":\"Marshes\",\"tiles\":[[4,3],[5,3],[6,3],[7,3],[8,3],[9,3],[10,3],[11,3],[4,4],[5,4],[6,4],[7,4],[8,4],[9,4],[10,4],[11,4],[4,5],[5,5],[6,5],[7,5],[8,5],[9,5],[10,5],[11,5]]}]");
+;// CONCATENATED MODULE: ./public/dist/maps/testMap.json
+const testMap_namespaceObject = JSON.parse("{\"Qy\":[[[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[2,0],[0,0],[2,0],[2,0],[1,0],[1,0],[2,0],[1,0]],[[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,0],[0,0],[2,0],[2,0],[2,0],[2,0],[1,0],[2,0]],[[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[0,0],[0,0],[0,0],[2,0],[2,0],[0,0],[0,0],[2,0],[2,0],[2,0]],[[1,0],[1,0],[0,0],[0,0],[0,0],[1,0],[2,0],[0,0],[1,0],[0,0],[0,0],[2,0],[1,0],[0,0],[0,0],[2,0],[2,0],[1,0],[2,0],[1,0]],[[1,0],[2,0],[1,0],[0,0],[0,0],[1,0],[1,0],[1,0],[2,0],[1,0],[1,0],[0,0],[0,0],[2,0],[1,0],[2,0],[2,0],[1,0],[1,0],[2,0]],[[2,0],[2,3],[0,0],[0,0],[2,0],[1,0],[0,0],[2,3],[2,3],[2,3],[1,0],[1,0],[0,0],[1,0],[1,0],[0,0],[0,0],[2,0],[2,0],[1,0]],[[1,0],[0,0],[2,3],[1,0],[1,0],[2,3],[1,0],[0,0],[0,0],[2,3],[2,0],[2,0],[0,0],[2,0],[0,0],[1,0],[0,0],[1,0],[2,0],[0,0]],[[0,0],[1,0],[2,3],[2,3],[1,0],[1,0],[2,3],[2,0],[1,0],[2,3],[2,3],[1,0],[0,0],[2,0],[2,0],[2,0],[0,0],[2,0],[0,0],[1,0]],[[1,0],[0,0],[1,0],[1,0],[2,3],[1,0],[0,0],[2,3],[2,0],[0,0],[2,3],[2,3],[0,0],[0,0],[1,0],[1,0],[0,0],[1,0],[1,0],[2,0]],[[2,0],[0,0],[2,0],[0,0],[2,0],[2,3],[2,0],[2,0],[1,0],[1,0],[2,0],[2,3],[2,3],[1,0],[0,0],[1,0],[1,0],[2,0],[2,0],[0,0]],[[1,0],[0,0],[2,0],[0,0],[2,0],[1,0],[2,3],[2,0],[1,0],[0,0],[1,0],[2,0],[2,3],[2,3],[0,0],[2,0],[2,0],[1,0],[1,0],[1,0]],[[1,0],[2,0],[1,0],[2,0],[2,0],[2,0],[2,0],[2,3],[1,0],[2,3],[1,0],[2,0],[1,0],[1,0],[0,0],[2,0],[0,0],[0,0],[2,0],[1,0]],[[0,0],[2,0],[0,0],[1,0],[2,0],[2,0],[1,0],[0,0],[2,3],[0,0],[0,0],[0,0],[0,0],[1,0],[0,0],[0,0],[0,0],[1,0],[2,0],[2,0]],[[0,0],[1,0],[1,0],[2,0],[1,0],[1,0],[0,0],[0,0],[0,0],[0,0],[2,0],[1,0],[0,0],[2,0],[2,0],[2,0],[1,0],[2,0],[2,0],[2,0]],[[2,0],[1,0],[0,0],[1,0],[0,0],[2,0],[0,0],[0,0],[0,0],[1,0],[0,0],[2,0],[2,0],[1,0],[0,0],[0,0],[0,0],[0,0],[0,0],[2,0]],[[0,0],[0,0],[1,0],[1,0],[1,0],[1,0],[0,0],[0,0],[2,0],[0,0],[1,0],[2,0],[2,0],[1,0],[1,0],[2,0],[2,0],[1,0],[0,0],[0,0]],[[2,0],[0,0],[2,0],[1,0],[2,0],[0,0],[2,0],[0,0],[2,0],[0,0],[1,0],[1,0],[1,0],[1,0],[2,0],[2,0],[1,0],[1,0],[2,0],[0,0]],[[0,0],[2,0],[1,0],[1,0],[0,0],[1,0],[2,0],[2,0],[0,0],[2,0],[2,0],[0,0],[1,0],[1,0],[1,0],[1,0],[1,0],[2,0],[0,0],[0,0]],[[0,0],[1,0],[0,0],[0,0],[1,0],[0,0],[0,0],[2,0],[0,0],[2,0],[0,0],[0,0],[0,0],[1,0],[2,0],[2,0],[0,0],[2,0],[2,0],[1,0]],[[0,0],[0,0],[0,0],[1,0],[2,0],[0,0],[0,0],[0,0],[0,0],[2,0],[2,0],[2,0],[1,0],[1,0],[0,0],[1,0],[0,0],[1,0],[1,0],[0,0]]]}");
 ;// CONCATENATED MODULE: ./public/src/main.js
 
 
@@ -43108,17 +43513,122 @@ class TileMap {
 
 
 
+
+
+// TEST ONLY IMPORT
+
+
+const MAP_SIZE = [20, 20];
+let NUMBER_CODES = [];
+for (let key of ["Digit", "Numpad"]) {
+    for (let i = 0; i < 10; i++) NUMBER_CODES.push(`${key}${i}`);
+}
+
 pixi_es.utils.sayHello("WebGL");
 
 let app = new pixi_es.Application({ width: 1400, height: 900, backgroundColor: 0x000000 });
 document.body.appendChild(app.view);
 
+let shadowIndex = [0, 0];
+let selectedTheme = "Grass";
+let main_tilemap = null;
+
+// SUIE STUFF
+let themeLabel = new suie.Label("SELECTED THEME: " + Object.keys(tileMapThemes_namespaceObject)[0], [1100, 20], 10);
+app.stage.addChild(themeLabel);
+
+let refIconContainer = new pixi_es.Container();
+let refLabelContainer = new pixi_es.Container();
+app.stage.addChild(refIconContainer);
+app.stage.addChild(refLabelContainer);
+// ----------
+
+function updateShadow(x, y) {
+    shadowIndex = [x, y];
+    main_tilemap.moveTileShadow(x, y);
+}
+
+function handleLetterPress(letter) {
+    let ascii = letter.charCodeAt(0);
+    if (ascii < 65 || ascii > 90) return;
+
+    let frameRect = refIconContainer.getChildAt(ascii - 65).texture.frame;
+    main_tilemap.updateTileIndex(shadowIndex[0], shadowIndex[1], frameRect.x / 16, frameRect.y / 16);
+}
+
+function handleNumberPress(num) {
+    if (num >= tileMapThemes_namespaceObject.length) return;
+
+    refIconContainer.removeChildren();
+    refLabelContainer.removeChildren();
+    selectedTheme = tileMapThemes_namespaceObject[num].theme;
+
+    themeLabel.text = `SELECTED THEME: ${selectedTheme}`;
+    let count = 0;
+    let x = 1100;
+    let y = 40;
+    for (let index of tileMapThemes_namespaceObject[num].tiles) {
+        let sprite = new pixi_es.Sprite(assetLoader.loadTexture(assetMap.environment.tileset_grass));
+        sprite.texture.frame = new pixi_es.Rectangle(index[0] * 16, index[1] * 16, 16, 16);
+        sprite.scale.set(2, 2);
+        sprite.position.set(x, y);
+        y += 36;
+        refIconContainer.addChild(sprite);
+
+        let label = new suie.Label(String.fromCharCode(65 + count++), [x + 40, y - 26], 10);
+        refLabelContainer.addChild(label);
+    }
+}
+
+// Application entry point
 assetLoader.initialize(pixi_es.Loader.shared, () => {
     logService(LogLevel.INFO, "initializing application");
 
-    let map = new tilemap(app.stage, assetMap.environment.tileset_grass, [20, 20]);
+    main_tilemap = new tilemap(
+        app.stage,
+        assetMap.environment.tileset_grass,
+        MAP_SIZE,
+        testMap_namespaceObject.Qy
+    );
 
-    map.moveTileShadow(4, 4);
+    // Select default theme
+    handleNumberPress(0);
+
+    pixi_js_keyboard_default().events.on("pressed", (keyCode, event) => {
+        let ctrlPressed = pixi_js_keyboard_default().isKeyDown("ControlLeft") || pixi_js_keyboard_default().isKeyDown("ControlRight");
+        let shiftPressed = pixi_js_keyboard_default().isKeyDown("ShiftLeft") || pixi_js_keyboard_default().isKeyDown("ShiftRight");
+
+        let factor = 1;
+        if (shiftPressed) factor = 5;
+        if (ctrlPressed) factor = 10;
+
+        if (keyCode === "KeyE" && ctrlPressed && shiftPressed) {
+            main_tilemap.exportData();
+        } else if (keyCode === "ArrowLeft") {
+            let x = shadowIndex[0] - factor;
+            if (x < 0) x = MAP_SIZE[0] - 1;
+            updateShadow(x, shadowIndex[1]);
+        } else if (keyCode === "ArrowRight") {
+            let x = shadowIndex[0] + factor;
+            if (x >= MAP_SIZE[0]) x = 0;
+            updateShadow(x, shadowIndex[1]);
+        } else if (keyCode === "ArrowUp") {
+            let y = shadowIndex[1] - factor;
+            if (y < 0) y = MAP_SIZE[1] - 1;
+            updateShadow(shadowIndex[0], y);
+        } else if (keyCode === "ArrowDown") {
+            let y = shadowIndex[1] + factor;
+            if (y >= MAP_SIZE[1]) y = 0;
+            updateShadow(shadowIndex[0], y);
+        } else if (NUMBER_CODES.includes(keyCode)) {
+            handleNumberPress(parseInt(keyCode.replace("Digit", "").replace("Numpad", "")));
+        } else if (
+            (keyCode.includes("Key") && keyCode.substr(3, 1).charCodeAt(0) <= 90) ||
+            keyCode.substr(3, 1).charCodeAt(0) >= 65
+        ) {
+            handleLetterPress(keyCode.substr(3, 1));
+        }
+    });
 
     app.ticker.add((delta) => {
         pixi_js_keyboard_default().update();
