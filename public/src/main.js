@@ -6,81 +6,27 @@ import Keyboard from "pixi.js-keyboard";
 import Mouse from "pixi.js-mouse";
 import TileMap from "./tilemap.js";
 import assetMap from "./assetMap.js";
-import theme from "./tileMapThemes.json";
+import exportData from "./exporter.js";
+import TileEditMode from "./editModes/tile.js";
+import RegionEditMode from "./editModes/region.js";
+import ContinentEditMode from "./editModes/continent.js";
 
 // TEST ONLY IMPORT
-import testMapData from "../dist/maps/testMap.json";
-
-const MAP_SIZE = [20, 20];
-let NUMBER_CODES = [];
-for (let key of ["Digit", "Numpad"]) {
-    for (let i = 0; i < 10; i++) NUMBER_CODES.push(`${key}${i}`);
-}
+import testMapData from "../dist/maps/Protomap.json";
+const EDIT_MODES = ["TILE", "REGION", "CONTINENT"];
+let currentMode = 0;
 
 PIXI.utils.sayHello("WebGL");
 
 let app = new PIXI.Application({ width: 1400, height: 900, backgroundColor: 0x000000 });
 document.body.appendChild(app.view);
 
-let shadowIndex = [0, 0];
-let selectedTheme = "Grass";
 let tilemap = null;
+let modes = {};
+let modeLabel = null;
 
-// SUIE STUFF
-let themeLabel = new SUIE.Label("SELECTED THEME: " + Object.keys(theme)[0], [1100, 20], 10);
-app.stage.addChild(themeLabel);
-
-let refIconContainer = new PIXI.Container();
-let refLabelContainer = new PIXI.Container();
-app.stage.addChild(refIconContainer);
-app.stage.addChild(refLabelContainer);
-// ----------
-
-function updateShadow(x, y) {
-    shadowIndex = [x, y];
-    tilemap.moveTileShadow(x, y);
-}
-
-function handleLetterPress(letter) {
-    let ascii = letter.charCodeAt(0);
-    if (ascii < 65 || ascii > 90) return;
-
-    let frameRect = refIconContainer.getChildAt(ascii - 65).texture.frame;
-    tilemap.updateTileIndex(shadowIndex[0], shadowIndex[1], frameRect.x / 16, frameRect.y / 16);
-}
-
-function handleNumberPress(num) {
-    if (num >= theme.length) return;
-
-    refIconContainer.removeChildren();
-    refLabelContainer.removeChildren();
-    selectedTheme = theme[num].theme;
-
-    themeLabel.text = `SELECTED THEME: ${selectedTheme}`;
-    let count = 0;
-    let x = 1100;
-    let y = 40;
-    let column = 0;
-    for (let index of theme[num].tiles) {
-        let sprite = new PIXI.Sprite(assetLoader.loadTexture(assetMap.environment.tileset_grass));
-        sprite.texture.frame = new PIXI.Rectangle(index[0] * 16, index[1] * 16, 16, 16);
-        sprite.scale.set(2, 2);
-        sprite.position.set(x + column * 78, y);
-        y += 36;
-        refIconContainer.addChild(sprite);
-
-        let label = new SUIE.Label(
-            String.fromCharCode(65 + count++),
-            [x + 40 + column * 78, y - 26],
-            10
-        );
-        refLabelContainer.addChild(label);
-
-        if (count > 12 * (column + 1)) {
-            y = 40;
-            column++;
-        }
-    }
+function getActiveMode() {
+    return modes[EDIT_MODES[currentMode]];
 }
 
 // Application entry point
@@ -90,47 +36,46 @@ assetLoader.initialize(PIXI.Loader.shared, () => {
     tilemap = new TileMap(
         app.stage,
         assetMap.environment.tileset_grass,
-        MAP_SIZE,
-        testMapData.tileIndices
+        testMapData.tileMapSize,
+        testMapData.tileIndices,
+        testMapData.scale
     );
 
-    // Select default theme
-    handleNumberPress(0);
+    // Generate edit mode classes
+    modes = {
+        TILE: new TileEditMode(app.stage, tilemap, testMapData),
+        REGION: new RegionEditMode(app.stage, tilemap, testMapData),
+        CONTINENT: new ContinentEditMode(app.stage, tilemap, testMapData),
+    };
+    modeLabel = new SUIE.Label(`MODE: ${EDIT_MODES[currentMode]}`, [1100, 10], 10);
+    app.stage.addChild(modeLabel);
 
-    Keyboard.events.on("pressed", (keyCode, event) => {
+    // Start off by activating initial mode
+    getActiveMode().activate();
+
+    Keyboard.events.on("pressed", (code) => {
         let ctrlPressed = Keyboard.isKeyDown("ControlLeft") || Keyboard.isKeyDown("ControlRight");
         let shiftPressed = Keyboard.isKeyDown("ShiftLeft") || Keyboard.isKeyDown("ShiftRight");
 
-        let factor = 1;
-        if (shiftPressed) factor = 5;
-        if (ctrlPressed) factor = 10;
+        console.log(code);
 
-        if (keyCode === "KeyE" && ctrlPressed && shiftPressed) {
-            tilemap.exportData();
-        } else if (keyCode === "ArrowLeft") {
-            let x = shadowIndex[0] - factor;
-            if (x < 0) x = MAP_SIZE[0] - 1;
-            updateShadow(x, shadowIndex[1]);
-        } else if (keyCode === "ArrowRight") {
-            let x = shadowIndex[0] + factor;
-            if (x >= MAP_SIZE[0]) x = 0;
-            updateShadow(x, shadowIndex[1]);
-        } else if (keyCode === "ArrowUp") {
-            let y = shadowIndex[1] - factor;
-            if (y < 0) y = MAP_SIZE[1] - 1;
-            updateShadow(shadowIndex[0], y);
-        } else if (keyCode === "ArrowDown") {
-            let y = shadowIndex[1] + factor;
-            if (y >= MAP_SIZE[1]) y = 0;
-            updateShadow(shadowIndex[0], y);
-        } else if (NUMBER_CODES.includes(keyCode)) {
-            handleNumberPress(parseInt(keyCode.replace("Digit", "").replace("Numpad", "")));
-        } else if (
-            (keyCode.includes("Key") && keyCode.substr(3, 1).charCodeAt(0) <= 90) ||
-            keyCode.substr(3, 1).charCodeAt(0) >= 65
-        ) {
-            handleLetterPress(keyCode.substr(3, 1));
+        // Handle mode changing
+        if (code === "Backquote") {
+            getActiveMode().deactivate();
+            currentMode++;
+            if (currentMode >= EDIT_MODES.length) currentMode = 0;
+            modeLabel.text = `MODE: ${EDIT_MODES[currentMode]}`;
+            getActiveMode().activate();
+            return;
         }
+
+        // Ctrl + Shift + E for exporting current map data
+        if (code === "KeyE" && ctrlPressed && shiftPressed) {
+            exportData(testMapData, tilemap, modes.REGION.getRegions());
+            return;
+        }
+
+        getActiveMode().handleKeypress(code, ctrlPressed, shiftPressed);
     });
 
     app.ticker.add((delta) => {

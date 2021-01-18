@@ -43379,20 +43379,16 @@ function logService(level, message, source = "APP", production = false) {
 // EXTERNAL MODULE: ./node_modules/pixi.js-keyboard/index.js
 var pixi_js_keyboard = __webpack_require__(569);
 var pixi_js_keyboard_default = /*#__PURE__*/__webpack_require__.n(pixi_js_keyboard);
-// EXTERNAL MODULE: ./node_modules/js-file-download/file-download.js
-var file_download = __webpack_require__(823);
-var file_download_default = /*#__PURE__*/__webpack_require__.n(file_download);
 ;// CONCATENATED MODULE: ./public/src/tilemap.js
-
 
 
 // Class used for displaying tilemap
 class TileMap {
-    constructor(stage, tilesetPath, mapSize, tileIndices = null) {
+    constructor(stage, tilesetPath, mapSize, tileIndices = null, scale = 2.0) {
         this._tilesetPath = tilesetPath;
         this._mapSize = mapSize;
         this._tileSize = [16, 16];
-        this._scale = 2.0;
+        this._scale = scale;
 
         this._tileIndices = [];
         this._tileSprites = [];
@@ -43438,6 +43434,19 @@ class TileMap {
         stage.addChild(this._spriteContainer);
     }
 
+    clearTileTints() {
+        for (let x = 0; x < this._mapSize[0]; x++) {
+            for (let y = 0; y < this._mapSize[1]; y++) {
+                this._tileSprites[x][y].tint = 0xffffff;
+            }
+        }
+    }
+
+    setTileTint(x, y, tint) {
+        let tile = this._tileSprites[x][y];
+        tile.tint = tint;
+    }
+
     moveTileShadow(x, y) {
         let tile = this._tileSprites[x][y];
         this._shadow.position = tile.position;
@@ -43453,59 +43462,353 @@ class TileMap {
         );
     }
 
-    exportData() {
-        let dataObject = {
-            name: "NEW_MAP",
-            maxPlayers: 4,
-            tilesetPath: this._tilesetPath,
-            tileMapSize: this._mapSize,
-            tileSize: this._tileSize,
-            scale: this._scale,
-            connectedEmpireReinforceIncrement: 3,
-            defaultReinforce: "3",
-            continents: [
-                {
-                    name: "NAME",
-                    regions: ["R1", "R2", "etc..."],
-                    color: "#ff4030",
-                    ownershipValue: 4,
-                },
-            ],
-            regions: [
-                {
-                    name: "R1",
-                    borderTiles: [
-                        [0, 0],
-                        [1, 0],
-                        [2, 0],
-                        [3, 0],
-                        [3, 1],
-                        [3, 2],
-                        [3, 3],
-                        [2, 3],
-                        [1, 3],
-                        [0, 3],
-                        [0, 2],
-                        [0, 1],
-                    ],
-                    unitPoint: [80, 80],
-                    borderRegions: ["R2"],
-                },
-            ],
-            tileIndices: this._tileIndices,
-        };
-
-        file_download_default()(JSON.stringify(dataObject), "NEW_MAP.json");
+    getTileIndices() {
+        return this._tileIndices;
     }
 }
 
 /* harmony default export */ const tilemap = (TileMap);
 
+// EXTERNAL MODULE: ./node_modules/js-file-download/file-download.js
+var file_download = __webpack_require__(823);
+var file_download_default = /*#__PURE__*/__webpack_require__.n(file_download);
+;// CONCATENATED MODULE: ./public/src/exporter.js
+
+
+function exportData(mapData, tilemap, regions) {
+    if (!mapData) {
+        // populated with defaults
+    }
+
+    mapData.tileIndices = tilemap.getTileIndices();
+    mapData.regions = regions;
+
+    file_download_default()(JSON.stringify(mapData), `${mapData.name}.json`);
+}
+
+;// CONCATENATED MODULE: ./public/src/utils.js
+let NUMBER_CODES = [];
+for (let key of ["Digit", "Numpad"]) {
+    for (let i = 0; i < 10; i++) NUMBER_CODES.push(`${key}${i}`);
+}
+
 ;// CONCATENATED MODULE: ./public/src/tileMapThemes.json
 const tileMapThemes_namespaceObject = JSON.parse("[{\"theme\":\"Grass\",\"tiles\":[[0,0],[1,0],[2,0],[3,0],[4,0],[5,0],[0,1],[1,1],[2,1],[3,1],[4,1],[0,2],[1,2],[2,2],[3,2],[4,2],[0,3],[1,3],[2,3],[3,3],[4,3]]},{\"theme\":\"Roads\",\"tiles\":[[5,0],[6,0],[7,0],[4,1],[5,1],[6,1],[7,1],[4,2],[5,2],[6,2],[7,2],[4,3],[5,3],[6,3],[7,3],[9,0],[10,0],[11,0],[8,1],[9,1],[10,1],[11,1],[8,2],[9,2],[10,2],[11,2],[8,3],[9,3],[10,3],[11,3]]},{\"theme\":\"Water\",\"tiles\":[[0,4],[0,5],[0,6],[0,7],[0,8],[1,4],[1,5],[1,6],[1,7],[1,8],[2,4],[2,5],[2,6]]},{\"theme\":\"Trees\",\"tiles\":[[9,4],[9,5],[9,6],[9,7],[9,8],[10,4],[10,5],[10,6],[10,7],[10,8],[11,4],[11,5],[11,6],[11,7],[11,8],[11,9]]},{\"theme\":\"Cliffs\",\"tiles\":[[6,4],[6,5],[6,6],[6,7],[6,8],[6,9],[6,10],[6,11],[7,4],[7,5],[7,6],[7,7],[7,8],[7,9],[7,10],[7,11],[8,4],[8,5],[8,6],[8,11]]},{\"theme\":\"Marshes\",\"tiles\":[[3,4],[3,5],[3,6],[3,7],[3,8],[3,9],[3,10],[3,11],[4,4],[4,5],[4,6],[4,7],[4,8],[4,9],[4,10],[4,11],[5,4],[5,5],[5,6],[5,7],[5,8],[5,9],[5,10],[5,11]]}]");
-;// CONCATENATED MODULE: ./public/dist/maps/testMap.json
-const testMap_namespaceObject = JSON.parse("{\"Qy\":[[[1,5],[1,5],[1,5],[1,5],[0,7],[2,5],[2,5],[2,5],[2,5],[2,6],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]],[[1,5],[1,5],[1,5],[1,5],[1,6],[0,0],[11,8],[0,0],[11,9],[0,0],[0,0],[0,0],[0,0],[0,0],[2,0],[2,0],[2,0],[2,0],[1,0],[0,0]],[[1,5],[1,5],[1,5],[1,5],[1,6],[0,0],[0,0],[11,7],[0,0],[0,0],[0,0],[0,0],[0,0],[2,0],[2,0],[0,0],[0,0],[2,0],[2,0],[0,0]],[[1,5],[1,5],[1,5],[0,7],[2,6],[6,10],[11,7],[1,0],[0,0],[11,7],[0,0],[2,0],[1,0],[0,0],[0,0],[2,0],[2,0],[1,0],[2,0],[0,0]],[[1,5],[1,5],[1,5],[1,6],[1,0],[7,4],[0,0],[9,4],[9,5],[9,6],[0,0],[0,0],[0,0],[2,0],[1,0],[2,0],[2,0],[1,0],[1,0],[0,0]],[[1,5],[1,5],[0,7],[2,6],[0,0],[7,4],[0,0],[10,4],[10,5],[10,6],[0,0],[6,11],[0,0],[1,0],[1,0],[0,0],[0,0],[2,0],[2,0],[0,0]],[[1,5],[1,5],[1,6],[2,0],[0,0],[7,4],[0,0],[10,4],[10,5],[10,6],[0,0],[7,6],[0,0],[2,0],[0,0],[1,0],[0,0],[1,0],[2,0],[0,0]],[[1,5],[1,5],[1,6],[0,0],[0,0],[7,4],[0,0],[11,4],[11,5],[11,6],[0,0],[6,9],[0,0],[2,0],[2,0],[2,0],[0,0],[2,0],[0,0],[0,0]],[[1,5],[1,5],[1,6],[3,0],[0,0],[7,4],[6,4],[6,5],[6,6],[0,0],[6,7],[8,6],[0,0],[0,0],[1,0],[1,0],[0,0],[1,0],[1,0],[0,0]],[[1,5],[1,5],[1,6],[0,0],[2,0],[7,4],[7,4],[7,9],[7,6],[0,0],[7,6],[2,3],[2,3],[1,0],[0,0],[1,0],[1,0],[2,0],[2,0],[0,0]],[[1,5],[1,5],[1,6],[0,0],[2,3],[7,4],[8,4],[8,5],[8,6],[0,0],[7,6],[2,0],[2,3],[2,3],[0,0],[2,0],[2,0],[1,0],[1,0],[1,0]],[[1,5],[1,5],[1,6],[0,1],[0,0],[8,4],[8,5],[8,5],[8,5],[8,5],[8,6],[2,0],[1,0],[1,0],[0,0],[2,0],[0,0],[0,0],[2,0],[1,0]],[[1,5],[1,5],[1,6],[1,3],[2,3],[0,0],[0,0],[0,0],[2,3],[0,0],[0,0],[0,0],[0,0],[1,0],[0,0],[0,0],[0,0],[1,0],[2,0],[2,0]],[[1,5],[1,5],[1,7],[0,5],[0,6],[0,0],[0,0],[0,0],[0,0],[0,0],[2,0],[1,0],[0,0],[2,0],[2,0],[2,0],[1,0],[2,0],[2,0],[2,0]],[[1,5],[1,5],[1,5],[1,5],[1,6],[2,1],[1,0],[0,0],[0,0],[1,0],[0,0],[2,0],[2,0],[1,0],[0,0],[0,0],[0,0],[0,0],[0,0],[2,0]],[[1,5],[1,5],[1,5],[1,5],[1,7],[0,6],[0,0],[0,0],[0,0],[0,0],[1,0],[2,0],[2,0],[1,0],[1,0],[2,0],[2,0],[1,0],[0,0],[0,0]],[[1,5],[1,5],[1,5],[1,5],[1,5],[1,6],[0,0],[1,1],[0,0],[1,1],[1,0],[1,0],[1,0],[1,0],[2,0],[2,0],[1,0],[1,0],[2,0],[0,0]],[[1,5],[1,5],[1,5],[1,5],[1,5],[1,7],[0,6],[0,0],[0,0],[0,0],[0,0],[1,0],[0,0],[2,1],[1,0],[1,0],[1,0],[2,0],[0,0],[0,0]],[[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,7],[0,6],[0,0],[0,0],[1,0],[0,0],[2,1],[1,0],[2,0],[2,0],[0,0],[2,0],[2,0],[1,0]],[[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,7],[0,5],[0,5],[0,5],[0,5],[0,5],[0,5],[0,5],[0,5],[0,5],[0,5],[0,6],[0,0]]]}");
+;// CONCATENATED MODULE: ./public/src/editModes/tile.js
+
+
+
+
+
+
+
+class TileEditMode {
+    constructor(stage, tilemap, mapData) {
+        this._stage = stage;
+        this._tilemap = tilemap;
+        this._mapData = mapData;
+
+        this.container = new pixi_es.Container();
+        this.container.visible = false;
+
+        this.themeLabel = new suie.Label(
+            "SELECTED THEME: " + Object.keys(tileMapThemes_namespaceObject)[0],
+            [1100, 30],
+            10
+        );
+        this.container.addChild(this.themeLabel);
+
+        this.refIconContainer = new pixi_es.Container();
+        this.refLabelContainer = new pixi_es.Container();
+        this.container.addChild(this.refIconContainer);
+        this.container.addChild(this.refLabelContainer);
+
+        this.shadowIndex = [0, 0];
+        this.selectedTheme = "Grass";
+
+        this.handleNumberPress(0);
+
+        stage.addChild(this.container);
+    }
+
+    activate() {
+        this._tilemap.clearTileTints();
+        this.container.visible = true;
+    }
+
+    deactivate() {
+        this.container.visible = false;
+    }
+
+    handleNumberPress(num) {
+        if (num >= tileMapThemes_namespaceObject.length) return;
+
+        this.refIconContainer.removeChildren();
+        this.refLabelContainer.removeChildren();
+        this.selectedTheme = tileMapThemes_namespaceObject[num].theme;
+
+        this.themeLabel.text = `SELECTED THEME: ${this.selectedTheme}`;
+        let count = 0;
+        let x = 1100;
+        let y = 50;
+        let column = 0;
+        for (let index of tileMapThemes_namespaceObject[num].tiles) {
+            let sprite = new pixi_es.Sprite(
+                assetLoader.loadTexture(assetMap.environment.tileset_grass)
+            );
+            sprite.texture.frame = new pixi_es.Rectangle(index[0] * 16, index[1] * 16, 16, 16);
+            sprite.scale.set(2, 2);
+            sprite.position.set(x + column * 78, y);
+            y += 36;
+            this.refIconContainer.addChild(sprite);
+
+            let label = new suie.Label(
+                String.fromCharCode(65 + count++),
+                [x + 40 + column * 78, y - 26],
+                10
+            );
+            this.refLabelContainer.addChild(label);
+
+            if (count > 12 * (column + 1)) {
+                y = 50;
+                column++;
+            }
+        }
+    }
+
+    handleLetterPress(letter) {
+        let ascii = letter.charCodeAt(0);
+        if (ascii < 65 || ascii > 90) return;
+
+        let frameRect = this.refIconContainer.getChildAt(ascii - 65).texture.frame;
+        this._tilemap.updateTileIndex(
+            this.shadowIndex[0],
+            this.shadowIndex[1],
+            frameRect.x / 16,
+            frameRect.y / 16
+        );
+    }
+
+    updateShadow(x, y) {
+        this.shadowIndex = [x, y];
+        this._tilemap.moveTileShadow(x, y);
+    }
+
+    handleKeypress(code, ctrl, shift) {
+        let factor = 1;
+        if (shift) factor = 5;
+        if (ctrl) factor = 10;
+
+        if (code === "KeyE" && ctrl && shift) {
+            this._tilemap.exportData();
+        } else if (code === "ArrowLeft") {
+            let x = this.shadowIndex[0] - factor;
+            if (x < 0) x = this._mapData.tileMapSize[0] - 1;
+            this.updateShadow(x, this.shadowIndex[1]);
+        } else if (code === "ArrowRight") {
+            let x = this.shadowIndex[0] + factor;
+            if (x >= this._mapData.tileMapSize[0]) x = 0;
+            this.updateShadow(x, this.shadowIndex[1]);
+        } else if (code === "ArrowUp") {
+            let y = this.shadowIndex[1] - factor;
+            if (y < 0) y = this._mapData.tileMapSize[1] - 1;
+            this.updateShadow(this.shadowIndex[0], y);
+        } else if (code === "ArrowDown") {
+            let y = this.shadowIndex[1] + factor;
+            if (y >= this._mapData.tileMapSize[1]) y = 0;
+            this.updateShadow(this.shadowIndex[0], y);
+        } else if (NUMBER_CODES.includes(code)) {
+            this.handleNumberPress(parseInt(code.replace("Digit", "").replace("Numpad", "")));
+        } else if (
+            (code.includes("Key") && code.substr(3, 1).charCodeAt(0) <= 90) ||
+            code.substr(3, 1).charCodeAt(0) >= 65
+        ) {
+            this.handleLetterPress(code.substr(3, 1));
+        }
+    }
+}
+
+;// CONCATENATED MODULE: ./public/src/editModes/region.js
+
+
+
+
+class RegionEditMode {
+    constructor(stage, tilemap, mapData) {
+        this._stage = stage;
+        this._tilemap = tilemap;
+        this._mapData = mapData;
+
+        this.container = new pixi_es.Container();
+        this.container.visible = false;
+        this.shadowIndex = [0, 0];
+
+        /*
+        {
+            "name": "SJ-1",
+            "borderTiles": [
+                [2, 2],
+                [3, 2],
+                ...
+            ],
+            "unitPoint": [124, 124],
+            "borderRegions": ["SEJ-1", "SJ-2"]
+        } 
+        */
+        this._regions = [...mapData.regions];
+        this._selectedRegionIndex = 0;
+        this._regionLabelContainer = new pixi_es.Container();
+        this.container.addChild(this._regionLabelContainer);
+
+        this._updateRegionLabels();
+        this._updateRegionTinting();
+
+        stage.addChild(this.container);
+    }
+
+    _updateRegionTinting() {
+        this._tilemap.clearTileTints();
+        for (let i = 0; i < this._regions.length; i++) {
+            let region = this._regions[i];
+            let regionTint = 0xff - i * 30;
+            regionTint = regionTint + (0xdd << 8) + (regionTint << 16);
+            for (let coords of region.borderTiles) {
+                this._tilemap.setTileTint(coords[0], coords[1], regionTint);
+            }
+            this._tilemap.setTileTint(region.unitPoint[0] / 16, region.unitPoint[1] / 16, 0xff0000);
+        }
+    }
+
+    _updateRegionLabels() {
+        this._regionLabelContainer.removeChildren();
+
+        let startx = 1100;
+        let y = 80;
+        for (let region of this._regions) {
+            let fontColor =
+                this._regions.indexOf(region) === this._selectedRegionIndex ? 0xff0000 : 0xdddddd;
+            let label = new suie.Label(
+                `${region.name} (${region.borderTiles.length})`,
+                [startx, y],
+                10,
+                fontColor
+            );
+            y += 20;
+            this._regionLabelContainer.addChild(label);
+        }
+    }
+
+    _createNewRegion() {
+        logService(
+            LogLevel.INFO,
+            `Created new region: REGION_${this._regions.length}`,
+            "REGION_MODE"
+        );
+        this._regions.push({
+            name: "REGION_" + this._regions.length,
+            borderTiles: [],
+            unitPoint: [0, 0],
+            borderRegions: [],
+        });
+        this._updateRegionLabels();
+    }
+
+    _updateShadow(x, y) {
+        this.shadowIndex = [x, y];
+        this._tilemap.moveTileShadow(x, y);
+    }
+
+    getRegions() {
+        return this._regions;
+    }
+
+    activate() {
+        this.container.visible = true;
+
+        this._updateRegionLabels();
+        this._updateRegionTinting();
+    }
+
+    deactivate() {
+        this.container.visible = false;
+
+        this._tilemap.clearTileTints();
+    }
+
+    handleKeypress(code, ctrl, shift) {
+        let factor = 1;
+        if (shift) factor = 5;
+        if (ctrl) factor = 10;
+
+        if (code === "KeyN") {
+            this._createNewRegion();
+        } else if (code === "Backslash") {
+            this._selectedRegionIndex++;
+            if (this._selectedRegionIndex >= this._regions.length) this._selectedRegionIndex = 0;
+            this._updateRegionLabels();
+        } else if (code === "KeyB") {
+            this._regions[this._selectedRegionIndex].borderTiles.push(this.shadowIndex);
+            this._updateRegionTinting();
+            this._updateRegionLabels();
+        } else if (code === "KeyC") {
+            this._regions[this._selectedRegionIndex].unitPoint = [
+                this.shadowIndex[0] * 16,
+                this.shadowIndex[1] * 16,
+            ];
+            this._updateRegionTinting();
+        } else if (code === "ArrowLeft") {
+            let x = this.shadowIndex[0] - factor;
+            if (x < 0) x = this._mapData.tileMapSize[0] - 1;
+            this._updateShadow(x, this.shadowIndex[1]);
+        } else if (code === "ArrowRight") {
+            let x = this.shadowIndex[0] + factor;
+            if (x >= this._mapData.tileMapSize[0]) x = 0;
+            this._updateShadow(x, this.shadowIndex[1]);
+        } else if (code === "ArrowUp") {
+            let y = this.shadowIndex[1] - factor;
+            if (y < 0) y = this._mapData.tileMapSize[1] - 1;
+            this._updateShadow(this.shadowIndex[0], y);
+        } else if (code === "ArrowDown") {
+            let y = this.shadowIndex[1] + factor;
+            if (y >= this._mapData.tileMapSize[1]) y = 0;
+            this._updateShadow(this.shadowIndex[0], y);
+        }
+    }
+}
+
+;// CONCATENATED MODULE: ./public/src/editModes/continent.js
+
+
+class ContinentEditMode {
+    constructor(stage) {
+        this.container = new pixi_es.Container();
+        // let themeLabel = new SUIE.Label("SELECTED THEME: " + Object.keys(theme)[0], [1100, 20], 10);
+        // hudContainers.TILE.addChild(themeLabel);
+        // let refIconContainer = new PIXI.Container();
+        // let refLabelContainer = new PIXI.Container();
+        // hudContainers.TILE.addChild(refIconContainer);
+        // hudContainers.TILE.addChild(refLabelContainer);
+
+        this.container.visible = false;
+    }
+
+    activate() {
+        this.container.visible = true;
+    }
+
+    deactivate() {
+        this.container.visible = false;
+    }
+
+    handleKeypress(code, ctrl, shift) {}
+}
+
+;// CONCATENATED MODULE: ./public/dist/maps/Protomap.json
+const Protomap_namespaceObject = JSON.parse("{\"name\":\"Protomap\",\"maxPlayers\":4,\"tilesetPath\":\"graphics/tilesets/overworld_tileset_grass.png\",\"tileMapSize\":[45,38],\"tileSize\":[16,16],\"scale\":1.5,\"connectedEmpireReinforceIncrement\":3,\"defaultReinforce\":\"3\",\"continents\":[],\"regions\":[{\"name\":\"REGION_0\",\"borderTiles\":[[1,1],[2,1],[3,1],[4,2],[5,2],[6,2],[7,2],[8,3],[8,4],[8,5],[9,6],[10,7],[10,8],[10,9],[9,9],[8,9],[8,10],[7,10],[6,10],[5,10],[4,10],[3,10],[3,9],[4,8],[4,7],[4,6],[3,5],[3,4],[3,3],[2,2]],\"unitPoint\":[96,96],\"borderRegions\":[]},{\"name\":\"REGION_1\",\"borderTiles\":[[11,10],[10,10],[9,10],[9,11],[8,11],[7,11],[6,11],[5,11],[4,11],[3,11],[4,12],[4,13],[4,14],[4,15],[4,16],[5,16],[5,17],[6,17],[6,18],[7,18],[7,19],[8,19],[9,18],[10,17],[11,16],[11,15],[11,14],[11,13],[11,12],[11,11]],\"unitPoint\":[112,240],\"borderRegions\":[]},{\"name\":\"REGION_2\",\"borderTiles\":[[11,17],[12,17],[13,17],[13,18],[13,19],[13,20],[13,21],[13,22],[14,23],[15,24],[15,25],[14,26],[13,27],[12,27],[11,27],[10,27],[9,27],[8,27],[7,27],[7,26],[6,26],[5,26],[4,25],[4,24],[4,23],[3,23],[2,23],[2,22],[3,22],[4,22],[5,23],[6,23],[7,23],[8,23],[8,22],[8,21],[8,20],[9,19],[10,18]],\"unitPoint\":[176,384],\"borderRegions\":[]},{\"name\":\"REGION_3\",\"borderTiles\":[[6,28],[5,29],[7,28],[8,28],[9,28],[10,28],[11,28],[12,28],[13,28],[14,28],[15,29],[15,30],[15,31],[15,32],[15,33],[14,34],[14,35],[13,35],[12,35],[11,35],[10,35],[9,34],[8,33],[7,32],[6,31],[6,30]],\"unitPoint\":[160,496],\"borderRegions\":[]},{\"name\":\"REGION_4\",\"borderTiles\":[[15,28],[16,27],[17,27],[18,27],[19,27],[20,27],[21,28],[22,29],[23,30],[23,31],[22,31],[21,31],[20,32],[20,33],[20,34],[19,34],[19,33],[18,33],[17,33],[16,33],[16,32],[16,31],[16,30],[16,29],[16,28]],\"unitPoint\":[304,480],\"borderRegions\":[]}],\"tileIndices\":[[[0,7],[2,5],[0,8],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[0,7],[0,8],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5]],[[1,6],[0,0],[2,4],[0,8],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[0,7],[0,8],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,6],[2,4],[2,5],[0,8],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[0,7],[0,8],[1,5],[1,5],[1,5],[1,5]],[[1,6],[0,0],[0,0],[2,4],[2,5],[2,5],[0,8],[1,5],[0,7],[2,5],[2,5],[2,5],[0,8],[1,6],[1,4],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,6],[2,0],[2,0],[1,4],[0,7],[2,5],[2,5],[0,8],[1,5],[1,5],[0,7],[2,6],[1,4],[1,5],[1,5],[1,5],[1,5]],[[1,6],[0,0],[2,0],[1,0],[2,0],[2,0],[2,4],[2,5],[2,6],[0,0],[1,0],[1,0],[2,4],[2,6],[2,4],[2,5],[2,5],[0,8],[1,5],[1,5],[1,5],[1,6],[2,0],[0,0],[2,4],[2,6],[2,0],[0,0],[2,4],[0,8],[1,5],[1,7],[0,5],[1,8],[1,5],[1,5],[1,5],[1,5]],[[1,7],[0,6],[0,0],[2,0],[2,0],[0,0],[0,0],[0,0],[0,0],[1,0],[2,0],[1,0],[1,0],[2,0],[0,0],[1,0],[0,0],[2,4],[0,8],[1,5],[1,5],[1,6],[2,0],[0,0],[2,0],[0,0],[2,0],[0,0],[2,0],[2,4],[0,8],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5]],[[1,5],[1,6],[2,0],[2,0],[1,0],[1,0],[1,0],[2,0],[0,0],[1,0],[2,0],[1,0],[0,0],[1,0],[2,0],[1,0],[2,0],[1,0],[2,4],[0,8],[1,5],[1,7],[0,6],[1,0],[1,0],[2,0],[0,0],[2,0],[1,0],[0,0],[2,4],[2,5],[0,8],[1,5],[1,5],[1,5],[1,5],[1,5]],[[0,7],[2,6],[2,0],[0,0],[1,0],[2,2],[1,0],[0,0],[1,0],[1,0],[0,0],[1,0],[2,0],[2,0],[2,0],[0,0],[2,0],[1,0],[1,0],[2,4],[0,8],[1,5],[1,6],[1,0],[1,0],[0,0],[0,0],[2,0],[2,0],[2,0],[2,0],[0,0],[2,4],[0,8],[1,5],[1,5],[1,5],[1,5]],[[1,7],[0,6],[1,0],[2,0],[1,0],[1,0],[1,0],[2,0],[2,0],[0,0],[1,0],[0,0],[2,0],[2,0],[1,0],[0,0],[0,0],[0,0],[0,0],[2,0],[2,4],[2,5],[2,6],[2,0],[0,0],[1,0],[2,0],[2,0],[2,0],[2,0],[2,0],[2,0],[0,0],[2,4],[0,8],[1,5],[1,5],[1,5]],[[1,5],[1,7],[0,6],[1,0],[1,0],[0,0],[2,0],[1,0],[2,0],[0,0],[2,0],[2,0],[0,0],[1,0],[0,0],[2,0],[2,0],[0,0],[0,0],[2,0],[0,0],[1,0],[2,0],[2,0],[1,0],[0,0],[0,0],[2,0],[1,0],[2,0],[2,0],[1,0],[1,0],[1,0],[2,4],[0,8],[1,5],[1,5]],[[1,5],[1,5],[1,7],[0,5],[0,5],[0,6],[2,0],[2,0],[2,2],[0,0],[1,0],[0,0],[2,0],[2,0],[1,0],[1,0],[1,0],[2,0],[1,0],[0,0],[0,0],[1,0],[2,0],[1,0],[1,0],[2,0],[0,0],[2,0],[0,0],[1,0],[1,0],[2,0],[1,0],[0,0],[0,0],[2,4],[0,8],[1,5]],[[1,5],[1,5],[1,5],[1,5],[1,5],[1,7],[0,6],[1,0],[0,0],[0,0],[1,0],[0,0],[7,9],[7,9],[1,0],[0,0],[0,0],[2,0],[1,0],[0,0],[1,0],[0,0],[1,0],[2,0],[2,0],[0,0],[1,0],[1,0],[2,0],[1,0],[1,0],[0,0],[0,0],[1,0],[0,0],[0,0],[1,4],[1,5]],[[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,7],[0,6],[0,4],[0,6],[1,0],[0,0],[2,0],[7,9],[7,9],[7,9],[6,11],[1,0],[2,0],[0,0],[2,0],[0,0],[0,0],[2,0],[1,0],[1,0],[0,0],[1,0],[0,0],[2,0],[0,0],[0,0],[2,0],[2,0],[1,0],[1,0],[1,4],[1,5]],[[1,5],[0,7],[0,8],[0,7],[2,5],[0,8],[1,5],[1,7],[1,8],[1,6],[1,0],[1,0],[2,0],[2,0],[2,0],[7,9],[8,11],[7,9],[2,0],[1,0],[7,9],[1,0],[1,0],[0,0],[0,0],[0,0],[0,0],[7,9],[2,0],[2,0],[0,0],[2,0],[0,0],[0,0],[0,0],[2,0],[1,4],[1,5]],[[1,5],[1,6],[2,4],[2,6],[2,0],[2,4],[0,8],[1,5],[0,7],[2,6],[1,0],[1,0],[1,0],[0,0],[2,0],[1,0],[0,0],[7,9],[7,9],[0,0],[7,9],[7,9],[7,9],[0,0],[0,0],[2,0],[7,9],[7,9],[1,0],[2,0],[2,0],[2,0],[0,0],[2,0],[1,0],[2,0],[1,4],[1,5]],[[1,5],[1,6],[1,0],[2,0],[1,0],[0,4],[1,8],[1,5],[1,7],[0,6],[1,0],[2,0],[2,0],[2,0],[1,0],[0,0],[0,0],[0,0],[1,0],[1,0],[2,0],[2,0],[7,9],[6,11],[2,0],[7,9],[7,9],[2,0],[1,0],[1,0],[1,0],[1,0],[2,0],[2,0],[0,0],[0,0],[1,4],[1,5]],[[1,5],[1,6],[1,0],[1,0],[0,0],[1,4],[1,5],[0,7],[2,5],[2,6],[0,0],[1,0],[0,0],[2,0],[0,0],[2,0],[1,0],[0,0],[0,0],[1,0],[0,0],[1,0],[1,0],[8,11],[7,9],[7,9],[0,0],[2,0],[0,0],[0,0],[1,0],[0,0],[1,0],[2,0],[0,4],[0,5],[1,8],[1,5]],[[0,7],[2,6],[0,0],[1,0],[2,0],[1,4],[1,5],[1,7],[0,6],[2,0],[2,0],[0,0],[1,0],[1,0],[1,0],[2,0],[1,3],[1,0],[1,0],[2,0],[0,0],[1,0],[1,0],[2,0],[1,0],[1,0],[0,0],[0,0],[0,0],[2,0],[1,0],[0,0],[1,0],[1,0],[1,4],[1,5],[1,5],[1,5]],[[1,6],[2,0],[2,0],[0,0],[2,0],[2,4],[2,5],[2,5],[2,6],[1,0],[1,0],[2,0],[2,0],[1,0],[2,3],[2,0],[1,0],[1,0],[2,3],[0,0],[0,0],[1,0],[2,0],[2,0],[2,0],[2,0],[1,0],[1,0],[2,0],[0,0],[2,0],[2,0],[2,0],[2,0],[1,4],[1,5],[1,5],[1,5]],[[1,7],[0,5],[0,6],[0,0],[0,0],[1,0],[1,0],[2,0],[0,0],[1,0],[0,0],[1,0],[0,0],[2,0],[1,0],[0,0],[2,0],[0,0],[2,0],[2,0],[0,0],[2,0],[1,0],[2,0],[0,0],[2,0],[2,0],[2,0],[2,0],[1,0],[2,0],[1,0],[2,0],[1,0],[2,4],[2,5],[0,8],[1,5]],[[1,5],[1,5],[1,6],[1,0],[1,0],[0,0],[0,0],[6,11],[0,0],[1,0],[0,0],[0,0],[1,0],[0,0],[2,0],[0,0],[2,0],[1,0],[2,0],[1,0],[2,0],[0,0],[2,0],[2,0],[1,0],[2,0],[2,0],[1,0],[2,0],[0,0],[0,0],[2,0],[2,0],[1,0],[1,0],[0,4],[1,8],[1,5]],[[1,5],[1,5],[1,6],[0,0],[2,0],[1,0],[2,0],[7,7],[6,6],[1,0],[1,0],[1,0],[2,0],[2,0],[1,0],[1,0],[1,0],[1,0],[0,0],[1,0],[1,3],[2,0],[0,0],[2,0],[1,0],[2,0],[2,0],[1,0],[1,0],[2,0],[0,0],[0,0],[2,0],[1,0],[1,0],[1,4],[1,5],[1,5]],[[1,5],[0,7],[2,6],[1,0],[2,0],[0,0],[0,0],[0,0],[7,6],[2,0],[0,0],[2,0],[0,0],[1,0],[0,0],[2,0],[2,0],[0,0],[0,0],[2,0],[0,0],[2,0],[0,0],[2,0],[2,0],[0,0],[2,0],[1,0],[1,0],[0,0],[2,0],[2,0],[0,4],[0,6],[0,4],[1,8],[1,5],[1,5]],[[1,5],[1,6],[0,0],[2,0],[2,0],[2,0],[0,0],[0,0],[7,6],[0,0],[0,0],[2,0],[1,0],[2,0],[0,0],[0,0],[0,0],[1,0],[1,0],[0,0],[2,0],[0,0],[2,0],[2,0],[2,0],[2,0],[1,0],[1,0],[0,0],[0,0],[0,0],[0,0],[1,4],[1,7],[1,8],[1,5],[1,5],[1,5]],[[1,5],[1,6],[1,0],[0,0],[1,0],[0,0],[0,0],[0,0],[7,7],[6,5],[6,6],[2,0],[1,0],[1,0],[2,0],[3,4],[3,6],[2,0],[1,0],[2,0],[0,0],[2,0],[0,0],[2,0],[1,0],[0,0],[1,0],[1,0],[1,0],[1,0],[1,0],[2,0],[1,4],[1,5],[1,5],[1,5],[1,5],[1,5]],[[1,5],[1,6],[2,0],[1,0],[2,0],[2,0],[2,0],[1,0],[6,7],[6,8],[7,6],[1,0],[1,0],[2,0],[3,4],[4,8],[4,7],[3,6],[1,0],[1,0],[2,0],[2,0],[0,0],[0,0],[0,0],[0,0],[1,0],[1,0],[1,0],[1,0],[0,0],[1,0],[2,4],[2,5],[0,8],[1,5],[1,5],[1,5]],[[1,5],[1,7],[0,6],[0,0],[1,0],[0,0],[0,0],[2,0],[7,6],[7,4],[7,7],[6,6],[2,0],[0,0],[5,4],[3,8],[4,5],[4,7],[3,6],[1,0],[0,0],[0,0],[0,0],[2,0],[0,0],[1,0],[0,0],[2,0],[2,0],[9,4],[9,5],[9,6],[1,0],[2,0],[2,4],[0,8],[1,5],[1,5]],[[1,5],[1,5],[1,6],[2,0],[1,0],[1,0],[1,0],[1,0],[7,6],[7,4],[1,0],[8,11],[2,0],[0,0],[2,0],[5,4],[5,5],[3,8],[4,7],[3,6],[0,0],[1,1],[1,0],[1,0],[2,0],[0,0],[2,0],[0,0],[1,0],[10,4],[10,5],[10,6],[1,0],[1,0],[0,0],[1,4],[1,5],[1,5]],[[1,5],[1,5],[1,6],[0,0],[0,0],[1,0],[2,0],[2,0],[7,6],[7,10],[0,0],[0,0],[0,0],[0,0],[1,0],[0,0],[0,0],[4,4],[4,5],[4,6],[1,0],[2,0],[1,0],[1,0],[1,0],[0,0],[0,0],[1,0],[9,4],[10,8],[10,5],[10,6],[0,0],[1,0],[1,0],[1,4],[1,5],[1,5]],[[1,5],[0,7],[2,6],[1,0],[2,0],[0,0],[1,0],[6,7],[8,6],[1,0],[1,0],[2,0],[0,0],[2,0],[2,0],[0,0],[1,0],[5,4],[5,5],[5,6],[1,0],[2,0],[2,0],[0,0],[2,1],[2,0],[0,0],[2,0],[10,8],[10,5],[10,5],[10,6],[1,0],[0,0],[1,0],[2,4],[0,8],[1,5]],[[1,5],[1,6],[1,0],[2,0],[0,0],[2,0],[1,0],[8,11],[2,0],[2,0],[0,0],[0,0],[0,0],[1,0],[0,0],[1,0],[0,0],[2,0],[1,0],[0,0],[2,0],[1,0],[1,0],[1,0],[0,0],[2,0],[1,0],[2,0],[10,4],[10,5],[9,7],[11,6],[0,0],[2,0],[2,0],[0,0],[1,4],[1,5]],[[1,5],[1,6],[0,4],[0,6],[0,0],[0,4],[0,5],[0,5],[0,6],[1,0],[0,0],[2,0],[2,0],[0,0],[2,0],[2,0],[2,0],[1,0],[1,0],[0,0],[1,0],[1,0],[1,0],[0,0],[2,0],[0,0],[1,0],[1,0],[11,4],[11,5],[11,6],[1,0],[1,0],[1,0],[2,0],[0,4],[1,8],[1,5]],[[1,5],[1,7],[1,8],[1,6],[1,0],[1,4],[1,5],[1,5],[1,6],[0,0],[1,0],[2,0],[1,0],[2,0],[2,0],[1,0],[2,0],[1,0],[2,0],[2,0],[1,0],[0,0],[0,0],[0,0],[0,0],[0,0],[2,0],[2,0],[1,0],[1,0],[1,0],[0,0],[0,0],[2,0],[2,0],[1,4],[1,5],[1,5]],[[1,5],[1,5],[1,5],[1,6],[2,0],[2,4],[0,8],[1,5],[1,7],[0,5],[0,6],[2,0],[2,0],[0,0],[1,0],[1,0],[0,0],[1,0],[0,0],[1,0],[1,0],[0,0],[1,0],[2,0],[0,0],[1,0],[0,0],[1,0],[0,0],[2,0],[0,0],[1,0],[0,0],[1,0],[0,0],[2,4],[0,8],[1,5]],[[1,5],[1,5],[0,7],[2,6],[2,0],[2,0],[2,4],[0,8],[1,5],[1,5],[1,7],[0,6],[1,0],[0,0],[1,0],[1,0],[0,0],[2,0],[2,0],[1,0],[0,0],[2,0],[2,0],[0,0],[2,0],[0,0],[0,0],[2,0],[1,0],[0,0],[1,0],[2,0],[2,0],[2,0],[0,0],[0,4],[1,8],[1,5]],[[1,5],[1,5],[1,6],[1,0],[0,0],[0,0],[2,0],[2,4],[0,8],[1,5],[1,5],[1,7],[0,5],[0,5],[0,5],[0,6],[1,0],[1,0],[1,0],[1,0],[0,0],[1,0],[2,0],[1,0],[2,0],[2,0],[0,0],[2,0],[1,0],[0,0],[1,0],[0,0],[0,0],[2,0],[0,0],[2,4],[0,8],[1,5]],[[1,5],[1,5],[1,7],[0,6],[2,0],[1,0],[2,0],[0,0],[2,4],[2,5],[2,5],[0,8],[0,7],[2,5],[0,8],[1,7],[0,6],[0,0],[2,0],[0,0],[0,0],[1,0],[1,0],[2,0],[1,0],[2,0],[2,0],[2,0],[0,0],[1,0],[1,0],[1,0],[2,0],[0,0],[2,0],[1,0],[1,4],[1,5]],[[1,5],[1,5],[1,5],[1,7],[0,6],[2,0],[1,0],[1,0],[0,0],[0,0],[2,0],[1,4],[1,7],[0,5],[1,8],[1,5],[1,6],[0,0],[1,0],[0,0],[0,0],[2,0],[0,0],[0,0],[2,0],[2,0],[0,0],[1,0],[2,0],[2,0],[2,0],[2,0],[0,0],[0,0],[1,0],[0,4],[1,8],[1,5]],[[1,5],[0,7],[2,5],[0,8],[1,7],[0,6],[2,0],[2,0],[1,0],[1,0],[0,4],[1,8],[0,7],[0,8],[1,5],[1,5],[1,7],[0,6],[1,0],[0,0],[1,0],[0,0],[0,0],[1,0],[0,0],[0,4],[0,5],[0,6],[1,0],[0,0],[2,0],[2,0],[2,0],[1,0],[1,0],[1,4],[1,5],[1,5]],[[1,5],[1,7],[0,6],[2,4],[0,8],[1,6],[2,0],[2,0],[2,0],[2,0],[1,4],[0,7],[2,6],[2,4],[0,8],[1,5],[1,5],[1,6],[2,0],[2,0],[2,0],[0,0],[1,0],[0,0],[2,0],[1,4],[0,7],[2,6],[0,0],[2,0],[0,0],[0,0],[1,0],[0,0],[2,0],[1,4],[1,5],[1,5]],[[1,5],[1,5],[1,7],[0,6],[1,4],[1,7],[0,6],[1,0],[2,0],[2,0],[1,4],[1,6],[1,0],[2,0],[2,4],[2,5],[0,8],[1,7],[0,5],[0,6],[0,0],[0,0],[1,0],[2,0],[1,0],[1,4],[1,6],[2,0],[0,0],[0,0],[1,0],[1,0],[2,0],[2,0],[0,4],[1,8],[1,5],[1,5]],[[1,5],[1,5],[1,5],[1,7],[1,8],[1,5],[1,7],[0,5],[0,6],[1,0],[1,4],[1,6],[0,0],[1,0],[2,0],[2,0],[2,4],[0,8],[1,5],[1,6],[0,0],[2,0],[2,0],[1,0],[1,0],[1,4],[1,7],[0,6],[1,0],[2,0],[0,0],[2,0],[0,4],[0,5],[1,8],[1,5],[1,5],[1,5]],[[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,7],[0,5],[1,8],[1,6],[2,0],[2,0],[1,0],[0,0],[1,0],[1,4],[1,5],[1,7],[0,5],[0,5],[0,6],[2,0],[2,0],[1,4],[1,5],[1,7],[0,6],[0,0],[2,0],[0,0],[1,4],[1,5],[1,5],[1,5],[1,5],[1,5]],[[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,6],[1,0],[0,0],[1,0],[0,4],[0,5],[1,8],[1,5],[1,5],[1,5],[1,5],[1,6],[2,0],[2,0],[1,4],[1,5],[1,5],[1,6],[0,0],[2,0],[0,4],[1,8],[1,5],[1,5],[1,5],[1,5],[1,5]],[[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,6],[2,0],[0,4],[0,6],[1,4],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,7],[0,6],[0,0],[1,4],[1,5],[1,5],[1,6],[0,0],[0,4],[1,8],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5]],[[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,7],[0,5],[1,8],[1,7],[1,8],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,7],[0,5],[1,8],[1,5],[1,5],[1,7],[0,5],[1,8],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5],[1,5]]]}");
 ;// CONCATENATED MODULE: ./public/src/main.js
+
+
+
 
 
 
@@ -43518,77 +43821,20 @@ const testMap_namespaceObject = JSON.parse("{\"Qy\":[[[1,5],[1,5],[1,5],[1,5],[0
 
 // TEST ONLY IMPORT
 
-
-const MAP_SIZE = [20, 20];
-let NUMBER_CODES = [];
-for (let key of ["Digit", "Numpad"]) {
-    for (let i = 0; i < 10; i++) NUMBER_CODES.push(`${key}${i}`);
-}
+const EDIT_MODES = ["TILE", "REGION", "CONTINENT"];
+let currentMode = 0;
 
 pixi_es.utils.sayHello("WebGL");
 
 let app = new pixi_es.Application({ width: 1400, height: 900, backgroundColor: 0x000000 });
 document.body.appendChild(app.view);
 
-let shadowIndex = [0, 0];
-let selectedTheme = "Grass";
 let main_tilemap = null;
+let modes = {};
+let modeLabel = null;
 
-// SUIE STUFF
-let themeLabel = new suie.Label("SELECTED THEME: " + Object.keys(tileMapThemes_namespaceObject)[0], [1100, 20], 10);
-app.stage.addChild(themeLabel);
-
-let refIconContainer = new pixi_es.Container();
-let refLabelContainer = new pixi_es.Container();
-app.stage.addChild(refIconContainer);
-app.stage.addChild(refLabelContainer);
-// ----------
-
-function updateShadow(x, y) {
-    shadowIndex = [x, y];
-    main_tilemap.moveTileShadow(x, y);
-}
-
-function handleLetterPress(letter) {
-    let ascii = letter.charCodeAt(0);
-    if (ascii < 65 || ascii > 90) return;
-
-    let frameRect = refIconContainer.getChildAt(ascii - 65).texture.frame;
-    main_tilemap.updateTileIndex(shadowIndex[0], shadowIndex[1], frameRect.x / 16, frameRect.y / 16);
-}
-
-function handleNumberPress(num) {
-    if (num >= tileMapThemes_namespaceObject.length) return;
-
-    refIconContainer.removeChildren();
-    refLabelContainer.removeChildren();
-    selectedTheme = tileMapThemes_namespaceObject[num].theme;
-
-    themeLabel.text = `SELECTED THEME: ${selectedTheme}`;
-    let count = 0;
-    let x = 1100;
-    let y = 40;
-    let column = 0;
-    for (let index of tileMapThemes_namespaceObject[num].tiles) {
-        let sprite = new pixi_es.Sprite(assetLoader.loadTexture(assetMap.environment.tileset_grass));
-        sprite.texture.frame = new pixi_es.Rectangle(index[0] * 16, index[1] * 16, 16, 16);
-        sprite.scale.set(2, 2);
-        sprite.position.set(x + column * 78, y);
-        y += 36;
-        refIconContainer.addChild(sprite);
-
-        let label = new suie.Label(
-            String.fromCharCode(65 + count++),
-            [x + 40 + column * 78, y - 26],
-            10
-        );
-        refLabelContainer.addChild(label);
-
-        if (count > 12 * (column + 1)) {
-            y = 40;
-            column++;
-        }
-    }
+function getActiveMode() {
+    return modes[EDIT_MODES[currentMode]];
 }
 
 // Application entry point
@@ -43598,47 +43844,46 @@ assetLoader.initialize(pixi_es.Loader.shared, () => {
     main_tilemap = new tilemap(
         app.stage,
         assetMap.environment.tileset_grass,
-        MAP_SIZE,
-        testMap_namespaceObject.Qy
+        Protomap_namespaceObject.tileMapSize,
+        Protomap_namespaceObject.tileIndices,
+        Protomap_namespaceObject.scale
     );
 
-    // Select default theme
-    handleNumberPress(0);
+    // Generate edit mode classes
+    modes = {
+        TILE: new TileEditMode(app.stage, main_tilemap, Protomap_namespaceObject),
+        REGION: new RegionEditMode(app.stage, main_tilemap, Protomap_namespaceObject),
+        CONTINENT: new ContinentEditMode(app.stage, main_tilemap, Protomap_namespaceObject),
+    };
+    modeLabel = new suie.Label(`MODE: ${EDIT_MODES[currentMode]}`, [1100, 10], 10);
+    app.stage.addChild(modeLabel);
 
-    pixi_js_keyboard_default().events.on("pressed", (keyCode, event) => {
+    // Start off by activating initial mode
+    getActiveMode().activate();
+
+    pixi_js_keyboard_default().events.on("pressed", (code) => {
         let ctrlPressed = pixi_js_keyboard_default().isKeyDown("ControlLeft") || pixi_js_keyboard_default().isKeyDown("ControlRight");
         let shiftPressed = pixi_js_keyboard_default().isKeyDown("ShiftLeft") || pixi_js_keyboard_default().isKeyDown("ShiftRight");
 
-        let factor = 1;
-        if (shiftPressed) factor = 5;
-        if (ctrlPressed) factor = 10;
+        console.log(code);
 
-        if (keyCode === "KeyE" && ctrlPressed && shiftPressed) {
-            main_tilemap.exportData();
-        } else if (keyCode === "ArrowLeft") {
-            let x = shadowIndex[0] - factor;
-            if (x < 0) x = MAP_SIZE[0] - 1;
-            updateShadow(x, shadowIndex[1]);
-        } else if (keyCode === "ArrowRight") {
-            let x = shadowIndex[0] + factor;
-            if (x >= MAP_SIZE[0]) x = 0;
-            updateShadow(x, shadowIndex[1]);
-        } else if (keyCode === "ArrowUp") {
-            let y = shadowIndex[1] - factor;
-            if (y < 0) y = MAP_SIZE[1] - 1;
-            updateShadow(shadowIndex[0], y);
-        } else if (keyCode === "ArrowDown") {
-            let y = shadowIndex[1] + factor;
-            if (y >= MAP_SIZE[1]) y = 0;
-            updateShadow(shadowIndex[0], y);
-        } else if (NUMBER_CODES.includes(keyCode)) {
-            handleNumberPress(parseInt(keyCode.replace("Digit", "").replace("Numpad", "")));
-        } else if (
-            (keyCode.includes("Key") && keyCode.substr(3, 1).charCodeAt(0) <= 90) ||
-            keyCode.substr(3, 1).charCodeAt(0) >= 65
-        ) {
-            handleLetterPress(keyCode.substr(3, 1));
+        // Handle mode changing
+        if (code === "Backquote") {
+            getActiveMode().deactivate();
+            currentMode++;
+            if (currentMode >= EDIT_MODES.length) currentMode = 0;
+            modeLabel.text = `MODE: ${EDIT_MODES[currentMode]}`;
+            getActiveMode().activate();
+            return;
         }
+
+        // Ctrl + Shift + E for exporting current map data
+        if (code === "KeyE" && ctrlPressed && shiftPressed) {
+            exportData(Protomap_namespaceObject, main_tilemap, modes.REGION.getRegions());
+            return;
+        }
+
+        getActiveMode().handleKeypress(code, ctrlPressed, shiftPressed);
     });
 
     app.ticker.add((delta) => {

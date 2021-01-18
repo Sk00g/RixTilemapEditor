@@ -1,13 +1,12 @@
 import * as PIXI from "pixi.js";
-import fileDownload from "js-file-download";
 
 // Class used for displaying tilemap
 class TileMap {
-    constructor(stage, tilesetPath, mapSize, tileIndices = null) {
+    constructor(stage, tilesetPath, mapSize, tileIndices = null, scale = 2.0) {
         this._tilesetPath = tilesetPath;
         this._mapSize = mapSize;
         this._tileSize = [16, 16];
-        this._scale = 2.0;
+        this._scale = scale;
 
         this._tileIndices = [];
         this._tileSprites = [];
@@ -53,6 +52,19 @@ class TileMap {
         stage.addChild(this._spriteContainer);
     }
 
+    clearTileTints() {
+        for (let x = 0; x < this._mapSize[0]; x++) {
+            for (let y = 0; y < this._mapSize[1]; y++) {
+                this._tileSprites[x][y].tint = 0xffffff;
+            }
+        }
+    }
+
+    setTileTint(x, y, tint) {
+        let tile = this._tileSprites[x][y];
+        tile.tint = tint;
+    }
+
     moveTileShadow(x, y) {
         let tile = this._tileSprites[x][y];
         this._shadow.position = tile.position;
@@ -68,49 +80,8 @@ class TileMap {
         );
     }
 
-    exportData() {
-        let dataObject = {
-            name: "NEW_MAP",
-            maxPlayers: 4,
-            tilesetPath: this._tilesetPath,
-            tileMapSize: this._mapSize,
-            tileSize: this._tileSize,
-            scale: this._scale,
-            connectedEmpireReinforceIncrement: 3,
-            defaultReinforce: "3",
-            continents: [
-                {
-                    name: "NAME",
-                    regions: ["R1", "R2", "etc..."],
-                    color: "#ff4030",
-                    ownershipValue: 4,
-                },
-            ],
-            regions: [
-                {
-                    name: "R1",
-                    borderTiles: [
-                        [0, 0],
-                        [1, 0],
-                        [2, 0],
-                        [3, 0],
-                        [3, 1],
-                        [3, 2],
-                        [3, 3],
-                        [2, 3],
-                        [1, 3],
-                        [0, 3],
-                        [0, 2],
-                        [0, 1],
-                    ],
-                    unitPoint: [80, 80],
-                    borderRegions: ["R2"],
-                },
-            ],
-            tileIndices: this._tileIndices,
-        };
-
-        fileDownload(JSON.stringify(dataObject), "NEW_MAP.json");
+    getTileIndices() {
+        return this._tileIndices;
     }
 }
 
