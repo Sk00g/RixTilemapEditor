@@ -5,6 +5,27 @@ import assetMap from "../assetMap.js";
 import SUIE from "../suie/suie.js";
 import theme from "../tileMapThemes.json";
 
+// CONSTANTS
+const TILE_HOTKEYS = [
+    "Q",
+    "W",
+    "E",
+    "R",
+    "T",
+    "Y",
+    "A",
+    "S",
+    "D",
+    "F",
+    "G",
+    "Z",
+    "X",
+    "C",
+    "V",
+    "B",
+    "P",
+];
+
 export default class TileEditMode {
     constructor(stage, tilemap, mapData) {
         this._stage = stage;
@@ -29,9 +50,30 @@ export default class TileEditMode {
         this.shadowIndex = [0, 0];
         this.selectedTheme = "Grass";
 
-        this.handleNumberPress(0);
+        this._helpTextContainer = new PIXI.Container();
+        this.container.addChild(this._helpTextContainer);
+        this._updateHelpText();
+
+        this.handleNumberPress(1);
 
         stage.addChild(this.container);
+    }
+
+    _updateHelpText() {
+        let x = 1100;
+        let y = 760;
+        let pad = 15;
+
+        for (let i = 0; i < theme.length; i++) {
+            this._helpTextContainer.addChild(
+                new SUIE.Label(
+                    `SELECT ${theme[i].theme} - [${i + 1}]`,
+                    [x, y + pad * i],
+                    8,
+                    0xdddddd
+                )
+            );
+        }
     }
 
     activate() {
@@ -44,18 +86,18 @@ export default class TileEditMode {
     }
 
     handleNumberPress(num) {
-        if (num >= theme.length) return;
+        if (num > theme.length || num < 1) return;
 
         this.refIconContainer.removeChildren();
         this.refLabelContainer.removeChildren();
-        this.selectedTheme = theme[num].theme;
+        this.selectedTheme = theme[num - 1].theme;
 
         this.themeLabel.text = `SELECTED THEME: ${this.selectedTheme}`;
         let count = 0;
         let x = 1100;
         let y = 50;
         let column = 0;
-        for (let index of theme[num].tiles) {
+        for (let index of theme[num - 1].tiles) {
             let sprite = new PIXI.Sprite(
                 assetLoader.loadTexture(assetMap.environment.tileset_grass)
             );
@@ -66,7 +108,7 @@ export default class TileEditMode {
             this.refIconContainer.addChild(sprite);
 
             let label = new SUIE.Label(
-                String.fromCharCode(65 + count++),
+                TILE_HOTKEYS[Math.min(TILE_HOTKEYS.length - 1, count++)],
                 [x + 40 + column * 78, y - 26],
                 10
             );
@@ -80,10 +122,10 @@ export default class TileEditMode {
     }
 
     handleLetterPress(letter) {
-        let ascii = letter.charCodeAt(0);
-        if (ascii < 65 || ascii > 90) return;
+        let keyIndex = TILE_HOTKEYS.indexOf(letter);
+        if (keyIndex === -1) return;
 
-        let frameRect = this.refIconContainer.getChildAt(ascii - 65).texture.frame;
+        let frameRect = this.refIconContainer.getChildAt(keyIndex).texture.frame;
         this._tilemap.updateTileIndex(
             this.shadowIndex[0],
             this.shadowIndex[1],

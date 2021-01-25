@@ -75,8 +75,8 @@ export default class RegionEditMode {
                 this._tilemap.setTileTint(coords[0], coords[1], regionTint);
             }
             this._tilemap.setTileTint(
-                (region.unitPoint[0] / 16) * this._mapData.scale,
-                (region.unitPoint[1] / 16) * this._mapData.scale,
+                region.unitPoint[0] / (16 * this._mapData.scale),
+                region.unitPoint[1] / (16 * this._mapData.scale),
                 0xff0000
             );
         }
@@ -95,9 +95,30 @@ export default class RegionEditMode {
             y += 20;
             this._regionLabelContainer.addChild(label);
 
-            label = new SUIE.Label(text, region.unitPoint, 8, fontColor);
+            label = new SUIE.Label(text, region.unitPoint, 10, fontColor);
+            let shadowLabel = new SUIE.Label(
+                text,
+                [region.unitPoint[0] + 1, region.unitPoint[1] + 1],
+                10,
+                0x000000
+            );
+            this._regionLabelContainer.addChild(shadowLabel);
             this._regionLabelContainer.addChild(label);
         }
+    }
+
+    _deleteRegion(region) {
+        this._selectedRegionIndex = 0;
+        logService(LogLevel.WARNING, `Deleting region ${region.name}`, "REGION_MODE");
+
+        for (let reg of this._regions) {
+            if (reg.borderRegions.includes(region.name))
+                reg.borderRegions.splice(reg.borderRegions.indexOf(region.name), 1);
+        }
+
+        this._regions.splice(this._regions.indexOf(region), 1);
+        this._updateRegionTinting();
+        this._updateRegionLabels();
     }
 
     _createNewRegion() {
@@ -150,7 +171,10 @@ export default class RegionEditMode {
             this._createNewRegion();
         } else if (code === "KeyA") {
             let region = this._regions[this._selectedRegionIndex];
-            let selectedPoint = [this.shadowIndex[0] * 16, this.shadowIndex[1] * 16];
+            let selectedPoint = [
+                this.shadowIndex[0] * 16 * this._mapData.scale,
+                this.shadowIndex[1] * 16 * this._mapData.scale,
+            ];
             let selectedRegion = this._regions.find(
                 (r) => r.unitPoint[0] === selectedPoint[0] && r.unitPoint[1] === selectedPoint[1]
             );
@@ -165,11 +189,7 @@ export default class RegionEditMode {
             console.log(this._regions);
         } else if (code === "KeyD") {
             let region = this._regions[this._selectedRegionIndex];
-            this._selectedRegionIndex = 0;
-            logService(LogLevel.WARNING, `Deleted region ${region.name}`, "REGION_MODE");
-            this._regions.splice(this._regions.indexOf(region), 1);
-            this._updateRegionTinting();
-            this._updateRegionLabels();
+            this._deleteRegion(region);
         } else if (code === "KeyR") {
             let region = this._regions[this._selectedRegionIndex];
             let match = region.borderTiles.find(
@@ -196,8 +216,8 @@ export default class RegionEditMode {
             }
         } else if (code === "KeyC") {
             this._regions[this._selectedRegionIndex].unitPoint = [
-                this.shadowIndex[0] * 16 * this.mapData.scale,
-                this.shadowIndex[1] * 16 * this.mapData.scale,
+                this.shadowIndex[0] * 16 * this._mapData.scale,
+                this.shadowIndex[1] * 16 * this._mapData.scale,
             ];
             this._updateRegionTinting();
         } else if (code === "ArrowLeft") {

@@ -1,14 +1,7 @@
 Jan 17, 2021:
 
 MVP TODO:
-- text with region name on map
-
-- add new continent
-- add region to continent
-- remove region from continent
-- remove continent
-- set ownership value (+ or -)
-- while in continent, name label is color of continent, and region labels are also color of continent
+- make tile labels qwerty instead of A - Z
 
 LATER TODO:
 - rivers
