@@ -24,6 +24,7 @@ document.body.appendChild(app.view);
 let tilemap = null;
 let modes = {};
 let modeLabel = null;
+let regions = [];
 
 function getActiveMode() {
     return modes[EDIT_MODES[currentMode]];
@@ -40,12 +41,13 @@ assetLoader.initialize(PIXI.Loader.shared, () => {
         testMapData.tileIndices,
         testMapData.scale
     );
+    regions = [...testMapData.regions];
 
     // Generate edit mode classes
     modes = {
         TILE: new TileEditMode(app.stage, tilemap, testMapData),
-        REGION: new RegionEditMode(app.stage, tilemap, testMapData),
-        CONTINENT: new ContinentEditMode(app.stage, tilemap, testMapData),
+        REGION: new RegionEditMode(app.stage, tilemap, testMapData, regions),
+        CONTINENT: new ContinentEditMode(app.stage, tilemap, testMapData, regions),
     };
     modeLabel = new SUIE.Label(`MODE: ${EDIT_MODES[currentMode]}`, [1100, 10], 10);
     app.stage.addChild(modeLabel);
@@ -71,7 +73,7 @@ assetLoader.initialize(PIXI.Loader.shared, () => {
 
         // Ctrl + Shift + E for exporting current map data
         if (code === "KeyE" && ctrlPressed && shiftPressed) {
-            exportData(testMapData, tilemap, modes.REGION.getRegions());
+            exportData(testMapData, tilemap, regions);
             return;
         }
 

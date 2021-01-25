@@ -1,10 +1,21 @@
 Jan 17, 2021:
 
-TODO:
-- Ctrl + Z and Ctrl + Y functionality
+MVP TODO:
+- text with region name on map
+
+- add new continent
+- add region to continent
+- remove region from continent
+- remove continent
+- set ownership value (+ or -)
+- while in continent, name label is color of continent, and region labels are also color of continent
+
+LATER TODO:
 - rivers
-
-
+- Ctrl + Z and Ctrl + Y functionality
+- pick specific colors for continents
+- new map button, creates blank grass tiles with customizable tiles wide / high
+- add yes / no confirmation for dangerous commands
 
     let dataObject = {
         name: "NEW_MAP",
@@ -14,6 +25,7 @@ TODO:
         tileSize: this._tileSize,
         scale: this._scale,
         connectedEmpireReinforceIncrement: 3,
+        generalRegionReinforceIncrement: 3,
         defaultReinforce: "3",
         continents: [
             {
