@@ -1,0 +1,13 @@
+{
+    "name": "BLANK",
+    "maxPlayers": 4,
+    "tilesetPath": "graphics/tilesets/overworld_tileset_grass.png",
+    "tileMapSize": [45, 38],
+    "tileSize": [16, 16],
+    "scale": 1.5,
+    "connectedEmpireReinforceIncrement": 3,
+    "defaultReinforce": "3",
+    "continents": [],
+    "regions": [],
+    "tileIndices": null
+}
