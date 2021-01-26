@@ -27,6 +27,8 @@ export default class ContinentEditMode {
         this.container.addChild(this._regionLabelContainer);
         this.container.addChild(this._continentLabelContainer);
 
+        this._updateHelpText();
+
         stage.addChild(this.container);
     }
 
@@ -157,7 +159,6 @@ export default class ContinentEditMode {
 
         this._updateRegionLabels();
         this._updateContinentLabels();
-        this._updateHelpText();
 
         // Draw once only as it can't be edited in this state
         this._drawRegionTinting();
