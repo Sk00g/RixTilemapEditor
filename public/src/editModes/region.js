@@ -131,7 +131,7 @@ export default class RegionEditMode {
         // Get the highest available region number
         let highest = 0;
         for (let region of this._regions.filter((r) => r.name.includes("REGION_"))) {
-            let num = parseInt(region.name.substr(region.name.length - 1));
+            let num = parseInt(region.name.substr(7));
             if (num > highest) highest = num;
         }
 
@@ -219,6 +219,7 @@ export default class RegionEditMode {
                 this.shadowIndex[0] * 16 * this._mapData.scale,
                 this.shadowIndex[1] * 16 * this._mapData.scale,
             ];
+            this._updateRegionLabels();
             this._updateRegionTinting();
         } else if (code === "ArrowLeft") {
             let x = this.shadowIndex[0] - factor;
