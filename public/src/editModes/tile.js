@@ -23,7 +23,9 @@ const TILE_HOTKEYS = [
     "C",
     "V",
     "B",
-    "P",
+    "N",
+    "U",
+    "J"
 ];
 
 export default class TileEditMode {
